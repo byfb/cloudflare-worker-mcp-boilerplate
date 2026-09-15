@@ -1,0 +1,15 @@
+name = "app-worker-local"
+main = "apps/worker/index.ts"
+compatibility_date = "2026-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+[dev]
+ip = "127.0.0.1"
+inspector_port = 0
+
+# API-only local development. Deploy with the root wrangler.jsonc.
+[[d1_databases]]
+binding = "DB"
+database_name = "app-db"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "../migrations"

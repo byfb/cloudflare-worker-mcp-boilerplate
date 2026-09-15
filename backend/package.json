@@ -1,0 +1,25 @@
+{
+  "name": "@app/backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --config vitest.config.ts",
+    "test:watch": "vitest --config vitest.config.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "2.0.0",
+    "@noble/hashes": "2.3.0",
+    "agents": "0.20.1",
+    "jose": "6.2.8",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "2.0.0",
+    "@types/node": "^22.0.0",
+    "typescript": "~5.9.3",
+    "vitest": "^5.0.0",
+    "@babel/core": "^8.0.0"
+  }
+}

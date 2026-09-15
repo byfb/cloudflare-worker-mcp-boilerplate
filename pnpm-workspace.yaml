@@ -1,0 +1,11 @@
+packages:
+  - backend
+  - web
+
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+  - workerd
+
+ignoredBuiltDependencies:
+  - core-js-pure

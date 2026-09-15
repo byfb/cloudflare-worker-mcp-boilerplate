@@ -1,0 +1,29 @@
+{
+  "name": "worker-mcp-boilerplate",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.33.2",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "pnpm run build:web && pnpm exec wrangler dev --config wrangler.jsonc --persist-to .wrangler/state",
+    "dev:api": "pnpm exec wrangler dev --config backend/wrangler.toml --persist-to .wrangler/state",
+    "dev:web": "pnpm --filter @app/web run dev",
+    "build:web": "pnpm --filter @app/web run build",
+    "build:api": "pnpm exec wrangler deploy --dry-run --config backend/wrangler.toml --outdir dist",
+    "build": "pnpm run build:web && pnpm exec wrangler deploy --dry-run --config wrangler.jsonc --outdir .build/worker",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm -r run test",
+    "check:template": "node scripts/check-template.mjs",
+    "db:migrate": "pnpm exec wrangler d1 migrations apply DB --local --config backend/wrangler.toml --persist-to .wrangler/state",
+    "db:migrate:remote": "pnpm exec wrangler d1 migrations apply DB --remote --config wrangler.jsonc",
+    "deploy": "pnpm run build:web && pnpm exec wrangler deploy --config wrangler.jsonc",
+    "ci": "pnpm run check:template && pnpm run typecheck && pnpm run test && pnpm run build",
+    "dev:mcp": "pnpm exec wrangler dev --local --config backend/dev/wrangler.toml",
+    "setup:local": "node scripts/setup.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "4.127.1"
+  }
+}
