@@ -85,9 +85,8 @@ build, and a non-deploying bundle using the production Worker configuration.
 Integration tests use an isolated in-memory SQLite database and the actual MCP
 client SDK. No production credentials or remote database are used.
 
-GitHub Actions is disabled by default. To enable checks on pushes and pull
-requests, rename `.github/workflows/ci.yml.disabled` to `ci.yml` in the same
-directory. Local verification with `pnpm run ci` is always available.
+GitHub Actions runs these checks on pushes and pull requests through
+`.github/workflows/ci.yml`. Local verification with `pnpm run ci` is also available.
 
 ## Make it your project
 
