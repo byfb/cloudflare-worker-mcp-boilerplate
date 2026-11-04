@@ -315,7 +315,7 @@ async function handleExactMcpRequest(
     }
 
     // Access verification is intentionally first: a missing/wrong assertion,
-    // including a browser-audience JWT or cookie-only request, cannot touch D1.
+    // including a wrong-audience JWT or cookie-only request, cannot touch D1.
     const principal = await access.mcp.verify(request);
     const services = createWorkerServices(env);
     const userId = await services.accessIdentity.resolveUserId(principal);

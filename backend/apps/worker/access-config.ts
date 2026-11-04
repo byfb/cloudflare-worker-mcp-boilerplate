@@ -72,13 +72,14 @@ export function accessWorkerConfig(env: AccessWorkerEnv): AccessWorkerConfig {
   const issuer = requiredString(env.ACCESS_ISSUER);
   const jwksUrl = requiredString(env.ACCESS_JWKS_URL);
   const browserAudience = requiredString(env.ACCESS_BROWSER_AUDIENCE);
-  const mcpAudience = requiredString(env.ACCESS_MCP_AUDIENCE);
+  const mcpAudience = env.ACCESS_MCP_AUDIENCE === undefined
+    ? browserAudience
+    : requiredString(env.ACCESS_MCP_AUDIENCE);
   const app = canonicalAppOrigin(env.APP_ORIGIN);
   const mcp = env.MCP_ORIGIN === undefined
     ? app
     : canonicalAppOrigin(env.MCP_ORIGIN);
 
-  if (browserAudience === mcpAudience) throw misconfigured();
   return {
     issuer,
     jwksUrl,

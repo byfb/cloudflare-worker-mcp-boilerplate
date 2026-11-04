@@ -71,8 +71,10 @@ call get_user_profile {}
 ```
 
 The main application's `/mcp` endpoint requires configured Cloudflare Access
-and a linked account. See [Access and MCP](docs/access-and-mcp.md) for hosted setup,
-client requirements, and how to add operations.
+and a linked account. Browser and MCP share a hostname and Access audience by
+default, with optional `MCP_ORIGIN` and `ACCESS_MCP_AUDIENCE` overrides. See
+[Access and MCP](docs/access-and-mcp.md) for hosted setup, client requirements,
+and how to add operations.
 
 ## Verify
 
@@ -87,6 +89,9 @@ client SDK. No production credentials or remote database are used.
 
 GitHub Actions runs these checks on pushes and pull requests through
 `.github/workflows/ci.yml`. Local verification with `pnpm run ci` is also available.
+An optional Cloudflare deployment workflow is included and disabled by default.
+See [GitHub Actions deployment](docs/deployment.md) for its enable switch, required
+variables, and secrets.
 
 ## Make it your project
 
@@ -96,8 +101,10 @@ GitHub Actions runs these checks on pushes and pull requests through
    PNG icons are generated from that SVG during the web build.
 3. Add business modules under `backend/modules`, routes in the Worker composition
    root, and new SQL migrations. See [architecture](docs/architecture.md).
-4. Once adding real infrastructure IDs, remove `check:template` from `ci` or adapt
-   that check to your new project's policy. Its placeholder checks are intentional.
+4. The GitHub deployment workflow injects infrastructure IDs into an ignored
+   generated config, so `check:template` can remain enabled. If you instead commit
+   real IDs in a derived project, remove that check from `ci` or adapt it to your
+   project's policy. Its placeholder checks are intentional.
 
 ## Deploy your own instance
 
@@ -117,10 +124,11 @@ pnpm run deploy
 ```
 
 The deploy command serves the Worker and built web assets together. Root
-`wrangler.jsonc` is the only deployment configuration. Domain routes and Access
-settings are opt-in. Account registration is open by default; decide your access
-and rate-limit policy before making a public service. Password hashing also
-needs a Worker CPU budget appropriate for your traffic.
+`wrangler.jsonc` is the deployment source; the optional GitHub workflow derives
+`wrangler.deploy.json` from it. Domain routes and Access settings are opt-in.
+Account registration is open by default; decide your access and rate-limit policy
+before making a public service. Password hashing also needs a Worker CPU budget
+appropriate for your traffic.
 
 ## Layout
 

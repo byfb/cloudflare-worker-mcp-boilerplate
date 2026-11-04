@@ -15,15 +15,18 @@
     "build": "pnpm run build:web && pnpm exec wrangler deploy --dry-run --config wrangler.jsonc --outdir .build/worker",
     "typecheck": "pnpm -r run typecheck",
     "test": "pnpm -r run test",
+    "test:deploy": "node --test scripts/prepare-deploy.test.mjs",
     "check:template": "node scripts/check-template.mjs",
     "db:migrate": "pnpm exec wrangler d1 migrations apply DB --local --config backend/wrangler.toml --persist-to .wrangler/state",
     "db:migrate:remote": "pnpm exec wrangler d1 migrations apply DB --remote --config wrangler.jsonc",
     "deploy": "pnpm run build:web && pnpm exec wrangler deploy --config wrangler.jsonc",
-    "ci": "pnpm run check:template && pnpm run typecheck && pnpm run test && pnpm run build",
+    "deploy:prepare": "node scripts/prepare-deploy.mjs",
+    "ci": "pnpm run check:template && pnpm run test:deploy && pnpm run typecheck && pnpm run test && pnpm run build",
     "dev:mcp": "pnpm exec wrangler dev --local --config backend/dev/wrangler.toml",
     "setup:local": "node scripts/setup.mjs"
   },
   "devDependencies": {
+    "jsonc-parser": "3.3.1",
     "wrangler": "4.127.1"
   }
 }
