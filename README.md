@@ -71,8 +71,10 @@ call get_user_profile {}
 ```
 
 The main application's `/mcp` endpoint requires configured Cloudflare Access
-and a linked account. See [Access and MCP](docs/access-and-mcp.md) for hosted setup,
-client requirements, and how to add operations.
+and a linked account. Browser and MCP share a hostname and Access audience by
+default, with optional `MCP_ORIGIN` and `ACCESS_MCP_AUDIENCE` overrides. See
+[Access and MCP](docs/access-and-mcp.md) for hosted setup, client requirements,
+and how to add operations.
 
 ## Verify
 

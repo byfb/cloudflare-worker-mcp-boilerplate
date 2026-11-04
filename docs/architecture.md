@@ -51,8 +51,10 @@ Server-side session revocation, password reset, invitation policy, and distribut
 rate limiting are extension points for the future application's requirements.
 
 Cloudflare Access is optional for normal account sign-in and mandatory for the
-production MCP route. It uses distinct browser and MCP audiences. Linking is
-explicit, keyed by verified issuer/subject; matching email addresses never merge accounts.
+production MCP route. Browser and MCP share an origin and Access audience by
+default; `MCP_ORIGIN` and `ACCESS_MCP_AUDIENCE` independently override those defaults.
+Each boundary verifies its configured audience. Linking is explicit, keyed by
+verified issuer/subject; matching email addresses never merge accounts.
 
 The PWA caches the application shell only. Authenticated data stays network-only;
 there is no offline write queue or account-data cache.

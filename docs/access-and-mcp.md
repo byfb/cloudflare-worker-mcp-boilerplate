@@ -11,16 +11,14 @@ fails closed, and an invalid assertion is rejected before querying D1.
 
 ## Hosted configuration
 
-Use separate browser and MCP hostnames pointing to the same Worker, for example
-`app.example.com` and `mcp.example.com`. Add these as your own custom-domain routes
-in root `wrangler.jsonc`, and configure two Cloudflare Access applications:
+By default, the browser app and MCP share one hostname and one Cloudflare Access
+application. For example, serve the app at `https://app.example.com` and MCP at
+`https://app.example.com/mcp` from the same Worker.
 
-1. A browser application covering the app hostname.
-2. A self-hosted application covering the **entire MCP hostname**, with Access
-   Managed OAuth enabled for MCP clients.
-
-Use your own identity provider and allow policies. Keep the applications' audience
-values distinct. Consult Cloudflare's [MCP security guide](https://developers.cloudflare.com/cloudflare-one/access-controls/ai-controls/secure-mcp-servers/)
+Add your hostname as a custom-domain route in root `wrangler.jsonc`. Configure one
+self-hosted Access application covering the **entire hostname**, enable Managed
+OAuth for MCP clients, and choose your identity provider and allow policies.
+Consult Cloudflare's [Managed OAuth guide](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/managed-oauth/)
 for current Access configuration and client callback requirements.
 
 Add these non-secret values to root `wrangler.jsonc` under `vars`:
@@ -28,11 +26,24 @@ Add these non-secret values to root `wrangler.jsonc` under `vars`:
 | Variable | Value |
 | --- | --- |
 | `APP_ORIGIN` | Canonical browser HTTPS origin, with no trailing slash |
-| `MCP_ORIGIN` | Canonical MCP HTTPS origin; defaults to `APP_ORIGIN` if omitted |
+| `MCP_ORIGIN` | Optional canonical MCP HTTPS origin, without `/mcp`; defaults to `APP_ORIGIN` if omitted |
 | `ACCESS_ISSUER` | Your team's `https://team.cloudflareaccess.com` issuer |
 | `ACCESS_JWKS_URL` | The issuer's `/cdn-cgi/access/certs` endpoint |
-| `ACCESS_BROWSER_AUDIENCE` | Browser Access application audience |
-| `ACCESS_MCP_AUDIENCE` | Distinct MCP Access application audience |
+| `ACCESS_BROWSER_AUDIENCE` | Access application audience used by the browser and, by default, MCP |
+| `ACCESS_MCP_AUDIENCE` | Optional MCP Access application audience; defaults to `ACCESS_BROWSER_AUDIENCE` if omitted |
+
+Both overrides may explicitly equal their browser values. Set `MCP_ORIGIN` only
+when using another origin, and `ACCESS_MCP_AUDIENCE` when using another Access
+application. They can be overridden independently. For separate hostnames, add
+the MCP custom-domain route and cover the entire MCP hostname with its Access
+application and Managed OAuth. If applications share a hostname but use separate
+path policies, also configure OAuth discovery coverage and verify the client login
+flow. Explicit empty or invalid override values are rejected rather than defaulted.
+
+With a shared audience, a valid Access assertion for that application is accepted
+at both browser and MCP boundaries. MCP still requires a linked account and
+connection authorization. A separate MCP audience accepts only assertions for
+that configured audience.
 
 The application also needs `JWT_SECRET`, configured as a Worker secret. No IdP
 client secret or Managed OAuth token belongs in this repository. If Access is
@@ -45,7 +56,8 @@ and other unprotected hostname routes as part of that deployment's routing polic
    an application account using the username/password form.
 2. Open Account and select **Link current Access identity**. This operation
    requires the browser assertion, existing session, same origin, and CSRF token.
-3. Connect an MCP client to `https://mcp.example.com/mcp` through Managed OAuth.
+3. Connect an MCP client to `https://app.example.com/mcp` through Managed OAuth
+   (or `<MCP_ORIGIN>/mcp` when overriding the origin).
    The Worker verifies the edge-provided `Cf-Access-Jwt-Assertion`, resolves the
    already linked account, then applies connection authorization.
 4. Run `exec` with `tools`, then `call get_user_profile {}`.
