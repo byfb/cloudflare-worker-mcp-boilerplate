@@ -91,7 +91,9 @@ GitHub Actions runs these checks on pushes and pull requests through
 `.github/workflows/ci.yml`. Local verification with `pnpm run ci` is also available.
 An optional Cloudflare deployment workflow is included and disabled by default.
 Its Terraform mode provisions D1, Access policies and Managed OAuth, with remote
-state in R2. It supports a plan-only run before enabling deployments. Terraform
+state in R2. It supports a plan-only run before enabling deployments. Changed
+Terraform plans require a human review through a protected GitHub environment;
+unchanged infrastructure skips that approval and apply. Terraform
 validation and mock-provider tests run separately in CI without cloud credentials;
 run them locally with `pnpm run check:infra` using `.terraform-version`.
 See [GitHub Actions deployment](docs/deployment.md) for its enable switch, required

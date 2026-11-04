@@ -104,12 +104,21 @@ artifacts. Keep the Worker `JWT_SECRET` in the existing Wrangler secrets path.
 ## CI/CD sequence and bootstrap
 
 The deployment sequence is: application checks and build → Terraform
-validation and saved plan → apply that plan → read non-secret outputs → generate
-Wrangler configuration → dry run → D1 migrations → Worker deployment. Access
+validation and saved plan → human approval when changes exist → apply that plan
+→ read non-secret outputs → generate Wrangler configuration → dry run → D1
+migrations → Worker deployment. Access
 protection is created before the first domain attachment. Generated settings
 disable `workers_dev` and preview URLs, so the custom domain is the intended
 entry point. Keep the existing repository deployment switch off until bootstrap
 and the target configuration are complete.
+
+The approval environment is separate from the `production` configuration
+environment, so unchanged infrastructure can deploy without an infrastructure
+review. The redacted summary identifies the source commit and plan checksum.
+The binary plan stays in private R2 storage until approval, is checked before
+apply, and is deleted by the cleanup job. The apply stage never re-plans. See
+[review infrastructure changes](deployment.md#review-infrastructure-changes)
+for reviewer setup, expiration and failure behavior.
 
 Bootstrap once per account or deployment target:
 
@@ -118,6 +127,7 @@ Bootstrap once per account or deployment target:
 3. Existing IdP IDs, or explicit permission to create the OTP provider.
 4. GitHub environment variables/secrets, including a stable Worker JWT secret
    and permitted OAuth callbacks.
+5. Required reviewers on the `production-infrastructure` GitHub environment.
 
 Scope the Cloudflare API token to the target account and zone. Terraform needs
 D1 Write, Access: Apps and Policies Write, and Access: Organizations, Identity

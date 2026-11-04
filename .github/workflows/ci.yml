@@ -29,6 +29,7 @@ jobs:
       - name: Validate infrastructure without cloud credentials
         working-directory: infra/cloudflare
         run: |
+          aws --version
           terraform fmt -check -recursive
           terraform init -backend=false -input=false -lockfile=readonly
           terraform validate

@@ -20,14 +20,57 @@ With only the Terraform switch enabled, pushes do not provision or deploy.
 Select **Actions → Deploy to Cloudflare → Run workflow**, choose `main`, and
 check **terraform_plan_only** to inspect an infrastructure plan. This reads the
 target infrastructure and writes a temporary state lock, but does not apply the
-plan, migrate D1 or deploy the Worker. The plan is printed in the job log;
-policy emails are marked sensitive. No plan or state artifact is uploaded.
+plan, migrate D1 or deploy the Worker. The redacted plan appears in the job
+summary and log; policy emails are marked sensitive. A plan-only run does not
+retain a binary plan for later apply.
 
 After reviewing the setup and plan, set `CLOUDFLARE_DEPLOY_ENABLED=true` to enable
-deployment. When both switches are enabled, pushes to `main` provision and deploy
-automatically. Manual runs deploy unless `terraform_plan_only` is checked. Runs
-from other branches are skipped. The `production` environment's configured
-deployment rules apply to plans and deployments.
+deployment. When both switches are enabled, pushes to `main` start the workflow.
+Infrastructure changes wait for manual approval before apply; a no-change plan
+continues directly to application deployment. Manual runs follow the same rule
+unless `terraform_plan_only` is checked. Runs from other branches are skipped.
+
+## Review infrastructure changes
+
+Configure a GitHub environment named **production-infrastructure** before the
+first Terraform deployment:
+
+1. Under **Settings → Environments**, add the environment and enable **Required
+   reviewers** with at least one trusted person or team.
+2. Disable **Allow administrators to bypass configured protection rules**.
+3. Restrict deployment branches to the `main` branch. If the sole reviewer also
+   starts deployments, leave **Prevent self-review** off so that person can
+   approve their own run manually.
+
+Keep configuration and secrets in `production` as described below; the approval
+environment needs no cloud secrets. Configure reviewer protection on
+`production-infrastructure`, rather than on `production`, to request approval
+only when the Terraform plan changes. GitHub enforces the environment gate, and
+the approval job also verifies that required reviewers exist. Missing protection
+or an unreadable environment fails the workflow instead of silently applying.
+[GitHub deployment protection rules](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments)
+
+The workflow uses `terraform plan -detailed-exitcode`: exit `0` means no changes,
+`2` requires review, and an error stops the run. Review the **Terraform plan** in
+the run summary, including its commit and SHA-256, then use **Review deployments**
+to approve or reject **production-infrastructure**. A rejection blocks apply,
+migrations and Worker deployment. This gate covers Terraform infrastructure;
+application code and SQL migrations keep their existing deployment behavior.
+[Terraform plan exit codes](https://developer.hashicorp.com/terraform/cli/commands/plan#detailed-exitcode)
+
+Changed plans are retained privately in the existing R2 state bucket under
+`terraform-plans/<owner>/<repository>/<run-id>/<attempt>.tfplan`. They are never
+uploaded as public GitHub artifacts. After approval, deployment retrieves the
+same binary plan and verifies its SHA-256. It does not create a new plan. A plan
+older than 24 hours, a missing or altered plan, or a Terraform stale-state error
+stops deployment and requires a new workflow run and review. The account,
+backend and source commit are fixed by the planning job.
+
+The cleanup job removes the saved plan after completion, rejection or failure.
+Configure an R2 lifecycle rule for the `terraform-plans/` prefix to expire objects
+after two days as a fallback for interrupted or failed cleanup. Do not apply that
+rule to state objects. Once cleanup runs, start a new workflow run instead of
+rerunning only the deploy job. [R2 object lifecycles](https://developers.cloudflare.com/r2/buckets/object-lifecycles/)
 
 For an already provisioned environment, leave Terraform disabled and use the
 existing-infrastructure mode below. Removing the deployment switch stops future
@@ -54,9 +97,9 @@ verify locking against the target bucket before relying on concurrent writers.
 See [Terraform infrastructure](terraform.md#remote-state) for the source-backed
 design and the limits of the template's offline validation.
 
-Create a GitHub environment named `production`. Put the following values in its
-variables and secrets; repository-level values also work except where the
-switches above explicitly require repository scope.
+Create a GitHub environment named `production` for configuration. Put the
+following values in its variables and secrets; repository-level values also
+work except where the switches above explicitly require repository scope.
 
 ## Shared configuration
 
@@ -149,22 +192,27 @@ intact until they have been explicitly transferred.
 1. Install the locked dependencies and run `pnpm run ci`.
 2. Validate deployment credentials before any infrastructure apply.
 3. In Terraform mode, initialize the locked provider and R2 backend, validate the
-   stack, run mock-provider tests and save a plan. A plan-only run stops here.
-4. Apply that saved plan, then export the narrow `deployment` output. D1 and
-   Access protection exist before Wrangler attaches the hostname.
+   stack, run mock-provider tests and save a plan. Publish its redacted review
+   summary. A plan-only run stops here.
+4. When the plan has changes, save it privately in R2 and wait for the required
+   reviewer. After approval, verify and apply that exact plan. With no changes,
+   skip both approval and `terraform apply`. Export the narrow `deployment`
+   output in either case.
+   D1 and Access protection exist before Wrangler attaches the hostname.
 5. Generate ignored `wrangler.deploy.json` alongside the source config, retaining
    relative entrypoint, asset and migration paths. Write `JWT_SECRET` to a
    permission-restricted file in the runner's temporary directory.
 6. Validate the bundle with a Wrangler dry run, apply pending D1 migrations,
    then deploy code, assets and the runtime secret together.
-7. Clean up generated config, plan, output, backend metadata and secret files,
-   including after failure.
+7. Clean up generated config, local and remote plans, output, backend metadata
+   and secret files, including after failure.
 
 Deployment runs are serialized. The committed `wrangler.jsonc` keeps placeholder
 IDs, so template checks stay enabled. An apply or migration is not rolled back
 if a later step fails. Use migrations compatible with the currently running
-code and retry using the same state key. The workflow contains no destroy step;
-D1, Access applications and an owned OTP provider also use `prevent_destroy`.
+code and retry in a new workflow run using the same state key. The workflow
+contains no destroy step; D1, Access applications and an owned OTP provider
+also use `prevent_destroy`.
 Changing from separate MCP hosting back to shared hosting needs an explicit
 resource/state migration because deleting the old Access app is protected.
 

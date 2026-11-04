@@ -18,8 +18,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    # Both modes require opt-in repository variables; cloud changes require DEPLOY_ENABLED.
+  plan:
+    # Cloud changes require DEPLOY_ENABLED; Terraform-only opt-in permits manual plans.
     if: >-
       ${{ github.ref == 'refs/heads/main' &&
           (vars.CLOUDFLARE_DEPLOY_ENABLED == 'true' ||
@@ -28,6 +28,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: production
+    outputs:
+      terraform_enabled: ${{ vars.CLOUDFLARE_TERRAFORM_ENABLED == 'true' }}
+      has_changes: ${{ steps.terraform.outputs.has_changes || 'false' }}
+      plan_key: ${{ steps.terraform.outputs.plan_key }}
+      plan_sha256: ${{ steps.terraform.outputs.plan_sha256 }}
+      plan_created_at: ${{ steps.terraform.outputs.plan_created_at }}
+      state_bucket: ${{ steps.terraform.outputs.state_bucket }}
+      state_key: ${{ steps.terraform.outputs.state_key }}
+      account_id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      worker_name: ${{ vars.CLOUDFLARE_WORKER_NAME }}
+      database_id: ${{ vars.CLOUDFLARE_D1_DATABASE_ID }}
+      database_name: ${{ vars.CLOUDFLARE_D1_DATABASE_NAME }}
     steps:
       - name: Require Terraform mode for a plan-only run
         if: ${{ inputs.terraform_plan_only && vars.CLOUDFLARE_TERRAFORM_ENABLED != 'true' }}
@@ -36,6 +48,7 @@ jobs:
           exit 1
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.sha }}
           persist-credentials: false
       - uses: pnpm/action-setup@v4
         with:
@@ -60,12 +73,10 @@ jobs:
         with:
           terraform_version: 1.14.7
           terraform_wrapper: false
-      - name: Plan and provision infrastructure
+      - name: Plan infrastructure for review
+        id: terraform
         if: ${{ vars.CLOUDFLARE_TERRAFORM_ENABLED == 'true' }}
-        working-directory: infra/cloudflare
         env:
-          TF_IN_AUTOMATION: 'true'
-          TF_INPUT: 'false'
           TF_PLAN_ONLY: ${{ inputs.terraform_plan_only }}
           TF_STATE_BUCKET: ${{ vars.TERRAFORM_STATE_BUCKET }}
           TF_STATE_KEY: ${{ vars.TERRAFORM_STATE_KEY || format('{0}/production.tfstate', github.repository) }}
@@ -84,48 +95,99 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.TERRAFORM_R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.TERRAFORM_R2_SECRET_ACCESS_KEY }}
         run: |
-          umask 077
-          : "${TF_STATE_BUCKET:?Set TERRAFORM_STATE_BUCKET}"
-          : "${AWS_ACCESS_KEY_ID:?Set TERRAFORM_R2_ACCESS_KEY_ID}"
-          : "${AWS_SECRET_ACCESS_KEY:?Set TERRAFORM_R2_SECRET_ACCESS_KEY}"
-          : "${CLOUDFLARE_API_TOKEN:?Set CLOUDFLARE_API_TOKEN}"
-          if ! [[ "$TF_VAR_account_id" =~ ^[a-fA-F0-9]{32}$ ]]; then
-            echo 'CLOUDFLARE_ACCOUNT_ID must be a 32-character hexadecimal ID.' >&2
-            exit 1
-          fi
-          terraform fmt -check -recursive
-          terraform init -input=false -lockfile=readonly \
-            -backend-config="bucket=$TF_STATE_BUCKET" \
-            -backend-config="key=$TF_STATE_KEY" \
-            -backend-config="endpoints={s3=\"https://${TF_VAR_account_id}.r2.cloudflarestorage.com\"}"
-          terraform validate
-          terraform test
-          terraform plan -input=false -lock-timeout=5m -out="$RUNNER_TEMP/cloudflare.tfplan"
-          if [ "$TF_PLAN_ONLY" != 'true' ]; then
-            terraform apply -input=false -lock-timeout=5m "$RUNNER_TEMP/cloudflare.tfplan"
-            terraform output -json deployment > "$RUNNER_TEMP/cloudflare-infrastructure.json"
-          fi
+          pnpm run check:infra
+          node scripts/terraform-workflow.mjs plan
+      - name: Remove local plan and backend metadata
+        if: always()
+        run: |
+          rm -f "$RUNNER_TEMP/cloudflare.tfplan"
+          rm -rf infra/cloudflare/.terraform
+
+  approval:
+    name: Approve infrastructure changes
+    needs: plan
+    if: ${{ needs.plan.outputs.has_changes == 'true' && !inputs.terraform_plan_only }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    environment:
+      name: production-infrastructure
+      url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      # GitHub creates missing environments without protection. Fail closed if misconfigured.
+      - name: Verify that required reviewers are configured
+        run: node scripts/terraform-workflow.mjs check-approval
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+  deploy:
+    needs: [plan, approval]
+    # A skipped approval is allowed only when the successful plan found no changes.
+    if: >-
+      ${{ !cancelled() && needs.plan.result == 'success' && !inputs.terraform_plan_only &&
+          (needs.plan.outputs.has_changes == 'false' || needs.approval.result == 'success') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build:web
+      - uses: hashicorp/setup-terraform@v3
+        if: ${{ needs.plan.outputs.terraform_enabled == 'true' }}
+        with:
+          terraform_version: 1.14.7
+          terraform_wrapper: false
+      - name: Apply the approved plan or read unchanged infrastructure
+        if: ${{ needs.plan.outputs.terraform_enabled == 'true' }}
+        run: node scripts/terraform-workflow.mjs deploy
+        env:
+          TF_VAR_account_id: ${{ needs.plan.outputs.account_id }}
+          TF_STATE_BUCKET: ${{ needs.plan.outputs.state_bucket }}
+          TF_STATE_KEY: ${{ needs.plan.outputs.state_key }}
+          TF_HAS_CHANGES: ${{ needs.plan.outputs.has_changes }}
+          TF_PLAN_KEY: ${{ needs.plan.outputs.plan_key }}
+          TF_PLAN_SHA256: ${{ needs.plan.outputs.plan_sha256 }}
+          TF_PLAN_CREATED_AT: ${{ needs.plan.outputs.plan_created_at }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.TERRAFORM_R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.TERRAFORM_R2_SECRET_ACCESS_KEY }}
       - name: Prepare deployment settings
-        if: ${{ !inputs.terraform_plan_only }}
         run: pnpm run deploy:prepare
         env:
-          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_WORKER_NAME: ${{ vars.CLOUDFLARE_WORKER_NAME }}
-          CLOUDFLARE_D1_DATABASE_ID: ${{ vars.CLOUDFLARE_D1_DATABASE_ID }}
-          CLOUDFLARE_D1_DATABASE_NAME: ${{ vars.CLOUDFLARE_D1_DATABASE_NAME }}
-          CLOUDFLARE_INFRASTRUCTURE_OUTPUT: ${{ vars.CLOUDFLARE_TERRAFORM_ENABLED == 'true' && format('{0}/cloudflare-infrastructure.json', runner.temp) || '' }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ needs.plan.outputs.account_id }}
+          CLOUDFLARE_WORKER_NAME: ${{ needs.plan.outputs.worker_name }}
+          CLOUDFLARE_D1_DATABASE_ID: ${{ needs.plan.outputs.database_id }}
+          CLOUDFLARE_D1_DATABASE_NAME: ${{ needs.plan.outputs.database_name }}
+          CLOUDFLARE_INFRASTRUCTURE_OUTPUT: ${{ needs.plan.outputs.terraform_enabled == 'true' && format('{0}/cloudflare-infrastructure.json', runner.temp) || '' }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
       - name: Validate deployment bundle
-        if: ${{ !inputs.terraform_plan_only }}
         run: pnpm exec wrangler deploy --dry-run --config wrangler.deploy.json --secrets-file "$RUNNER_TEMP/cloudflare-worker-secrets.json"
       - name: Apply database migrations
-        if: ${{ !inputs.terraform_plan_only }}
         run: pnpm exec wrangler d1 migrations apply DB --remote --config wrangler.deploy.json
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       - name: Deploy Worker and web assets
-        if: ${{ !inputs.terraform_plan_only }}
         run: pnpm exec wrangler deploy --config wrangler.deploy.json --secrets-file "$RUNNER_TEMP/cloudflare-worker-secrets.json"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -135,3 +197,26 @@ jobs:
           rm -f wrangler.deploy.json "$RUNNER_TEMP/cloudflare-worker-secrets.json" \
             "$RUNNER_TEMP/cloudflare-infrastructure.json" "$RUNNER_TEMP/cloudflare.tfplan"
           rm -rf infra/cloudflare/.terraform
+
+  cleanup:
+    name: Remove saved infrastructure plan
+    needs: [plan, approval, deploy]
+    if: ${{ always() && needs.plan.outputs.plan_key != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node scripts/terraform-workflow.mjs cleanup
+        env:
+          TF_VAR_account_id: ${{ needs.plan.outputs.account_id }}
+          TF_STATE_BUCKET: ${{ needs.plan.outputs.state_bucket }}
+          TF_PLAN_KEY: ${{ needs.plan.outputs.plan_key }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.TERRAFORM_R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.TERRAFORM_R2_SECRET_ACCESS_KEY }}
