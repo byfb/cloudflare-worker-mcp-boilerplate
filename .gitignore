@@ -16,3 +16,13 @@ playwright-report/
 test-results/
 .worktrees/
 .codegraph/
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+*.tfvars.json
+*.tfbackend
+*.tfbackend.json
+crash.log
+crash.*.log

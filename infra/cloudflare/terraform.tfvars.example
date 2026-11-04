@@ -1,0 +1,18 @@
+account_id            = "00000000000000000000000000000000"
+worker_name           = "app-worker"
+database_name         = "app-db"
+app_hostname          = "app.example.com"
+allowed_emails        = ["owner@example.com"]
+identity_provider_ids = ["00000000-0000-0000-0000-000000000000"]
+oauth_redirect_uris   = ["https://client.example.com/oauth/callback"]
+
+# Optional: creates a second Access app/audience when different from app_hostname.
+# mcp_hostname = "mcp.example.com"
+
+# To manage an email OTP IdP instead of reusing existing providers:
+# identity_provider_ids          = []
+# create_email_identity_provider = true
+
+# Opt in only if your MCP client uses these callback types.
+# oauth_allow_localhost = true
+# oauth_allow_loopback  = true

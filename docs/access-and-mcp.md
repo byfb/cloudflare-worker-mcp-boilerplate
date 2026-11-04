@@ -15,6 +15,13 @@ By default, the browser app and MCP share one hostname and one Cloudflare Access
 application. For example, serve the app at `https://app.example.com` and MCP at
 `https://app.example.com/mcp` from the same Worker.
 
+The optional [Terraform deployment mode](deployment.md#terraform-mode-configuration)
+provisions this Access application, its email allow policy and Managed OAuth,
+then injects the generated audience and team domain into Wrangler. It can also
+manage an email OTP provider or use existing IdPs. A separate `MCP_HOSTNAME`
+creates a second application and supplies the optional runtime overrides below.
+Follow the remaining manual setup only when provisioning infrastructure yourself.
+
 Add your hostname as a custom-domain route in root `wrangler.jsonc`. Configure one
 self-hosted Access application covering the **entire hostname**, enable Managed
 OAuth for MCP clients, and choose your identity provider and allow policies.
