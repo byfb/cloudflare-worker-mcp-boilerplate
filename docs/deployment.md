@@ -6,6 +6,11 @@ and deployment are **disabled by default**. The separate CI workflow checks
 application code and runs Terraform validation with a mock provider on every
 push and pull request, without cloud credentials.
 
+Application tables and queries use Drizzle ORM. Generate and review SQL with
+`pnpm run db:generate` before committing schema changes. The existing Wrangler
+migration step applies those committed files; CI never uses `drizzle-kit push`
+or generates migrations against production. See [database setup](database.md).
+
 ## Choose a mode
 
 Set the following switches as **repository-level Actions variables**. Job

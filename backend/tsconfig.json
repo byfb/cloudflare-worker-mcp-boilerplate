@@ -19,7 +19,8 @@
     "skipLibCheck": true,
     "types": [
       "vitest/globals",
-      "node"
+      "node",
+      "@cloudflare/workers-types"
     ]
   },
   "include": [
@@ -29,6 +30,7 @@
     "shared-kernel",
     "tests",
     "vitest.config.ts",
+    "drizzle.config.ts",
     "dev"
   ]
 }

@@ -6,6 +6,7 @@ React application, and authenticated remote MCP server.
 ## Included
 
 - A pnpm workspace with separate backend and frontend packages.
+- Drizzle ORM for typed D1 queries, with module-owned schemas and generated migrations.
 - Username/password accounts, Argon2id password hashes, signed session cookies,
   and CSRF protection for authenticated writes.
 - Optional Cloudflare Access identity linking and browser session bootstrap.
@@ -82,8 +83,10 @@ and how to add operations.
 pnpm run ci
 ```
 
-This checks template hygiene, TypeScript, backend and frontend tests, the web
-build, and a non-deploying bundle using the production Worker configuration.
+This checks template hygiene, Drizzle migration metadata, TypeScript, backend and
+frontend tests, the web build, and a non-deploying bundle using the production
+Worker configuration. Schema tests compare the typed tables with migration
+snapshots and exercise constraints against SQLite.
 Integration tests use an isolated in-memory SQLite database and the actual MCP
 client SDK. No production credentials or remote database are used.
 
@@ -106,7 +109,10 @@ variables, and secrets.
 2. Replace the generic package names, page title, PWA manifest, and `web/public/icon.svg`.
    PNG icons are generated from that SVG during the web build.
 3. Add business modules under `backend/modules`, routes in the Worker composition
-   root, and new SQL migrations. See [architecture](docs/architecture.md).
+   root, and typed tables in each module's `persistence/schema.ts`. Generate and
+   review migrations with `pnpm run db:generate --name describe_change`, then
+   apply locally with `pnpm run db:migrate`. See [database setup](docs/database.md)
+   and [architecture](docs/architecture.md).
 4. The GitHub deployment workflow injects infrastructure IDs into an ignored
    generated config, so `check:template` can remain enabled. If you instead commit
    real IDs in a derived project, remove that check from `ci` or adapt it to your
@@ -155,7 +161,7 @@ backend/
   dev/              Synthetic local MCP server
   tests/            Database integration and architecture checks
 web/                React + Vite application and PWA assets
-migrations/         Fresh D1 schema and future schema changes
+migrations/         Ordered D1 SQL migrations and Drizzle snapshots
 infra/cloudflare/   Optional Terraform D1 and Access infrastructure
 scripts/            Local setup and template hygiene
 docs/               Architecture and Access/MCP setup

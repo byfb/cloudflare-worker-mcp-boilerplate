@@ -1,16 +1,19 @@
+import { eq } from 'drizzle-orm'
 import { ApiError } from '../../../platform/http/api-error'
-import { D1Executor, type D1Database } from '../../../platform/d1'
+import { createDatabase, executeD1, type Database, type D1Database } from '../../../platform/d1'
 import type { AccountRepository } from '../application/ports'
 import type { NewUser, UserRow } from '../domain/models'
-import { INSERT_USER_SQL, SELECT_USER_BY_ID_SQL, SELECT_USER_BY_USERNAME_SQL } from './sql'
+import { users } from './schema'
+
+const userColumns = { id: users.id, username: users.username, password_hash: users.password_hash }
 
 export class D1AccountRepository implements AccountRepository {
-  private readonly executor: D1Executor
-  constructor(db: D1Database) { this.executor = new D1Executor(db) }
+  private readonly db: Database
+  constructor(binding: D1Database) { this.db = createDatabase(binding) }
 
   async insertUser(user: NewUser): Promise<void> {
     try {
-      await this.executor.statement(INSERT_USER_SQL, [user.id, user.username, user.password_hash]).run()
+      await executeD1('run', () => this.db.insert(users).values(user).run())
     } catch (error) {
       const message = error instanceof Error ? error.message : ''
       if (message.includes('UNIQUE constraint failed: users.username')) {
@@ -19,10 +22,14 @@ export class D1AccountRepository implements AccountRepository {
       throw ApiError.internal('d1_insert_failed', 'could not create account')
     }
   }
-  findUserByUsername(username: string): Promise<UserRow | null> {
-    return this.executor.first<UserRow>(SELECT_USER_BY_USERNAME_SQL, [username])
+
+  async findUserByUsername(username: string): Promise<UserRow | null> {
+    return (await executeD1('query', () => this.db.select(userColumns).from(users)
+      .where(eq(users.username, username)).get())) ?? null
   }
-  findUserById(id: string): Promise<UserRow | null> {
-    return this.executor.first<UserRow>(SELECT_USER_BY_ID_SQL, [id])
+
+  async findUserById(id: string): Promise<UserRow | null> {
+    return (await executeD1('query', () => this.db.select(userColumns).from(users)
+      .where(eq(users.id, id)).get())) ?? null
   }
 }
