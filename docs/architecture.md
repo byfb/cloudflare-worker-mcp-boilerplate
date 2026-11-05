@@ -13,8 +13,8 @@ describes the routing mechanism.
 | Worker composition | Wire Account, its repositories, session verification, and MCP |
 | Account domain | Username/password rules, external identity keys, client descriptors |
 | Account application | Register, sign in, read current profile, link identities, manage connections |
-| Account persistence | Own writes to `users`, `auth_identities`, and `mcp_connections` |
-| Platform | Runtime/transport mechanics, SQL execution, cryptography, Access JWT verification |
+| Account persistence | Own Drizzle tables and writes to `users`, `auth_identities`, and `mcp_connections` |
+| Platform | Runtime/transport mechanics, Drizzle D1 client and errors, cryptography, Access JWT verification |
 | MCP adapter | Protocol limits, command discovery, strict schemas, explicit result projections |
 | Web | Routes, account views, session state, and network calls |
 | Infrastructure | Terraform owns D1 and Access resources; Wrangler owns Worker code, domain attachment, schema migrations and runtime secrets |
@@ -35,8 +35,10 @@ and [deployment](deployment.md) for ownership and execution details.
    `backend/modules/<capability>`; avoid empty layers and generic CRUD frameworks.
 2. Keep invariants next to the owning model. Add application services and
    repository boundaries when orchestration and persistence need to vary independently.
-3. Use parameterized SQL and new ordered migration files. Each table has one
-   write owner. Schema migrations run explicitly before code that requires them.
+3. Define typed tables in the module's `persistence/schema.ts` and use Drizzle's
+   query builder in its repository. Generate and review ordered migrations with
+   `pnpm run db:generate`. Each table has one write owner. Wrangler applies
+   migrations explicitly before code that requires them; see [database setup](database.md).
 4. Register HTTP handlers in `backend/apps/worker/index.ts`. Authenticate before
    reading account data, and verify CSRF before parsing an authenticated mutation.
 5. Share a narrow capability through the module's `public` entrypoint for MCP or
@@ -48,6 +50,13 @@ and [deployment](deployment.md) for ownership and execution details.
 Platform imports no application modules. Domain code depends only on its own
 domain and the shared kernel. `architecture.test.ts` checks these directions and
 ensures production composition never imports the local demo.
+
+The platform creates a schema-free Drizzle D1 client. Modules supply their own
+tables to queries; domain models and repository ports do not import Drizzle.
+Repositories use explicit projections at account boundaries and preserve atomic
+upserts for identity ownership and MCP connection counters. `executeD1` maps
+driver errors to the existing public codes while removing Drizzle wrappers that
+contain SQL parameters. Query logging is disabled.
 
 ## Authentication and data
 

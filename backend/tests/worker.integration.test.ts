@@ -157,7 +157,7 @@ describe('fresh application', () => {
       rejectedHeaders.push({ 'Cf-Access-Jwt-Assertion': await assertion(browserAudience) })
     }
     const prepare = vi.fn(() => { throw new Error('database must not be reached') })
-    env.DB = { ...database.db, prepare }
+    env.DB = Object.assign(database.db, { prepare })
     for (const headers of rejectedHeaders) {
       expect((await request('/mcp', { method: 'POST', headers })).status).toBe(401)
     }

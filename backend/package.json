@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "db:generate": "drizzle-kit generate",
+    "db:check": "drizzle-kit check",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --config vitest.config.ts",
     "test:watch": "vitest --config vitest.config.ts"
@@ -12,14 +14,17 @@
     "@modelcontextprotocol/server": "2.0.0",
     "@noble/hashes": "2.3.0",
     "agents": "0.20.1",
+    "drizzle-orm": "0.45.4",
     "jose": "6.2.8",
     "zod": "4.4.3"
   },
   "devDependencies": {
+    "@babel/core": "^8.0.0",
+    "@cloudflare/workers-types": "5.20261104.1",
     "@modelcontextprotocol/client": "2.0.0",
     "@types/node": "^22.0.0",
+    "drizzle-kit": "0.31.11",
     "typescript": "~5.9.3",
-    "vitest": "^5.0.0",
-    "@babel/core": "^8.0.0"
+    "vitest": "^5.0.0"
   }
 }
