@@ -90,6 +90,12 @@ client SDK. No production credentials or remote database are used.
 GitHub Actions runs these checks on pushes and pull requests through
 `.github/workflows/ci.yml`. Local verification with `pnpm run ci` is also available.
 An optional Cloudflare deployment workflow is included and disabled by default.
+Its Terraform mode provisions D1, Access policies and Managed OAuth, with remote
+state in R2. It supports a plan-only run before enabling deployments. Changed
+Terraform plans require a human review through a protected GitHub environment;
+unchanged infrastructure skips that approval and apply. Terraform
+validation and mock-provider tests run separately in CI without cloud credentials;
+run them locally with `pnpm run check:infra` using `.terraform-version`.
 See [GitHub Actions deployment](docs/deployment.md) for its enable switch, required
 variables, and secrets.
 
@@ -108,6 +114,13 @@ variables, and secrets.
 
 ## Deploy your own instance
 
+For automated infrastructure and deployment, follow
+[GitHub Actions deployment](docs/deployment.md). Terraform manages D1 and Access;
+Wrangler attaches the domain and deploys the application. The first account,
+zone, Zero Trust organization and private state bucket are one-time prerequisites.
+
+For manual provisioning:
+
 ```sh
 pnpm exec wrangler login
 pnpm exec wrangler d1 create app-db
@@ -125,7 +138,8 @@ pnpm run deploy
 
 The deploy command serves the Worker and built web assets together. Root
 `wrangler.jsonc` is the deployment source; the optional GitHub workflow derives
-`wrangler.deploy.json` from it. Domain routes and Access settings are opt-in.
+`wrangler.deploy.json` from it. Terraform mode supplies protected domain routes
+and Access settings automatically; existing-infrastructure mode preserves yours.
 Account registration is open by default; decide your access and rate-limit policy
 before making a public service. Password hashing also needs a Worker CPU budget
 appropriate for your traffic.
@@ -142,6 +156,7 @@ backend/
   tests/            Database integration and architecture checks
 web/                React + Vite application and PWA assets
 migrations/         Fresh D1 schema and future schema changes
+infra/cloudflare/   Optional Terraform D1 and Access infrastructure
 scripts/            Local setup and template hygiene
 docs/               Architecture and Access/MCP setup
 ```

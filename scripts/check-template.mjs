@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { join, relative } from 'node:path'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
-const excluded = new Set(['node_modules', '.git', '.wrangler', '.build', 'dist', 'coverage', '.worktrees', '.codegraph', 'test-results', 'playwright-report'])
+const excluded = new Set(['node_modules', '.git', '.terraform', '.wrangler', '.build', 'dist', 'coverage', '.worktrees', '.codegraph', 'test-results', 'playwright-report'])
 const problems = []
 function walk(directory) {
   for (const entry of readdirSync(directory, { withFileTypes: true })) {
@@ -11,7 +11,8 @@ function walk(directory) {
     if (excluded.has(entry.name) || entry.isSymbolicLink()) continue
     if (entry.isDirectory()) { walk(path); continue }
     if (/^(?:\.dev\.vars|\.env)(?:\.|$)/.test(entry.name) && !entry.name.endsWith('.example')) continue
-    if (!/\.(?:[cm]?[jt]sx?|jsonc?|ya?ml|toml|md|html|css|svg|example)$/.test(entry.name)) continue
+    if (/\.(?:tfstate(?:\..*)?|tfvars(?:\.json)?|tfbackend(?:\.json)?)$/.test(entry.name)) continue
+    if (!/\.(?:[cm]?[jt]sx?|jsonc?|ya?ml|toml|tf|hcl|md|html|css|svg|example)$/.test(entry.name)) continue
     const content = readFileSync(path, 'utf8')
     const name = relative(root, path)
     if (/(?:\/Users|\/home)\/[a-zA-Z0-9_-]+\//.test(content)) problems.push(`${name}: machine-specific home path`)

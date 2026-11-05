@@ -17,10 +17,17 @@ describes the routing mechanism.
 | Platform | Runtime/transport mechanics, SQL execution, cryptography, Access JWT verification |
 | MCP adapter | Protocol limits, command discovery, strict schemas, explicit result projections |
 | Web | Routes, account views, session state, and network calls |
+| Infrastructure | Terraform owns D1 and Access resources; Wrangler owns Worker code, domain attachment, schema migrations and runtime secrets |
 
 Account is the only starting module. Its public profile contains a username.
 There is deliberately no sample business entity, product profile schema, or
 pre-created account. Username is unique and immutable in this starter.
+
+The optional infrastructure stack lives in `infra/cloudflare`, outside the
+application import graph. Its narrow `deployment` output feeds the generated
+Wrangler configuration. Shared account settings and the private Terraform state
+bucket are bootstrapped separately. See [Terraform infrastructure](terraform.md)
+and [deployment](deployment.md) for ownership and execution details.
 
 ## Add a feature
 
