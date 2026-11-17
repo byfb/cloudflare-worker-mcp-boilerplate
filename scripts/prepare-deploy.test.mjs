@@ -1,10 +1,14 @@
 import assert from 'node:assert/strict'
-import { existsSync, readFileSync, readdirSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { spawnSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 import { test } from 'node:test'
-import { parse } from 'jsonc-parser'
+import { parse, stringify } from 'smol-toml'
 import { prepareDeployment, validateDeploymentCredentials } from './prepare-deploy.mjs'
 
-const source = readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8')
+const source = readFileSync(new URL('../wrangler.toml', import.meta.url), 'utf8')
 const env = {
   CLOUDFLARE_ACCOUNT_ID: '0123456789abcdef0123456789abcdef',
   CLOUDFLARE_WORKER_NAME: 'example-worker',
@@ -19,7 +23,7 @@ test('injects deployment identifiers while preserving the template and relative 
 
   assert.equal(config.name, env.CLOUDFLARE_WORKER_NAME)
   assert.equal(config.account_id, env.CLOUDFLARE_ACCOUNT_ID)
-  assert.deepEqual(config.d1_databases, template.d1_databases.map((database) => (
+  assert.deepEqual(structuredClone(config.d1_databases), template.d1_databases.map((database) => (
     database.binding === 'DB' ? { ...database, database_id: env.CLOUDFLARE_D1_DATABASE_ID } : database
   )))
   assert.equal(config.main, template.main)
@@ -50,19 +54,51 @@ test('keeps routing, Access settings, and other bindings while overriding the da
   template.workers_dev = false
   template.preview_urls = false
   template.d1_databases.push({ binding: 'OTHER', database_name: 'other-db', database_id: '22222222-2222-2222-2222-222222222222' })
-  const { config } = prepareDeployment(JSON.stringify(template), { ...env, CLOUDFLARE_D1_DATABASE_NAME: 'example-db' })
+  const { config } = prepareDeployment(stringify(template), { ...env, CLOUDFLARE_D1_DATABASE_NAME: 'example-db' })
 
-  assert.deepEqual(config.vars, template.vars)
-  assert.deepEqual(config.routes, template.routes)
+  assert.deepEqual(structuredClone(config.vars), template.vars)
+  assert.deepEqual(structuredClone(config.routes), template.routes)
   assert.equal(config.workers_dev, false)
   assert.equal(config.preview_urls, false)
   assert.equal(config.d1_databases[0].database_name, 'example-db')
-  assert.deepEqual(config.d1_databases[1], template.d1_databases[1])
+  assert.deepEqual(structuredClone(config.d1_databases[1]), template.d1_databases[1])
 })
 
-test('accepts JSONC comments and trailing commas', () => {
-  const { config } = prepareDeployment('/* template */ { "d1_databases": [{ "binding": "DB", }], }', env)
+test('accepts TOML comments, tables, and trailing array commas', () => {
+  const { config } = prepareDeployment('# template\ncompatibility_flags = ["nodejs_compat",]\n[[d1_databases]]\nbinding = "DB"\n', env)
+  assert.deepEqual(config.compatibility_flags, ['nodejs_compat'])
   assert.equal(config.d1_databases[0].database_id, env.CLOUDFLARE_D1_DATABASE_ID)
+})
+
+test('does not disclose source values in TOML parse errors', () => {
+  assert.throws(() => prepareDeployment('JWT_SECRET = "private-parse-error-value', env), (error) => {
+    assert.equal(error.message, 'wrangler.toml must contain valid TOML.')
+    return true
+  })
+})
+
+test('writes a TOML deployment config and keeps secrets in their restricted JSON file', () => {
+  const directory = realpathSync(mkdtempSync(join(tmpdir(), 'prepare-deploy-')))
+  try {
+    mkdirSync(join(directory, 'scripts'))
+    copyFileSync(new URL('./prepare-deploy.mjs', import.meta.url), join(directory, 'scripts/prepare-deploy.mjs'))
+    symlinkSync(fileURLToPath(new URL('../node_modules', import.meta.url)), join(directory, 'node_modules'), 'dir')
+    writeFileSync(join(directory, 'wrangler.toml'), source)
+    const result = spawnSync(process.execPath, [join(directory, 'scripts/prepare-deploy.mjs')], {
+      env: { ...env, RUNNER_TEMP: directory }, encoding: 'utf8',
+    })
+    assert.equal(result.status, 0, result.stderr)
+    const generated = readFileSync(join(directory, 'wrangler.deploy.toml'), 'utf8')
+    assert.deepEqual(parse(generated), prepareDeployment(source, env).config)
+    assert.ok(!generated.includes(env.JWT_SECRET))
+    assert.ok(!generated.includes(env.CLOUDFLARE_API_TOKEN))
+    const secrets = join(directory, 'cloudflare-worker-secrets.json')
+    assert.deepEqual(JSON.parse(readFileSync(secrets, 'utf8')), { JWT_SECRET: env.JWT_SECRET })
+    assert.equal(statSync(secrets).mode & 0o777, 0o600)
+    assert.equal(statSync(join(directory, 'wrangler.deploy.toml')).mode & 0o777, 0o600)
+  } finally {
+    rmSync(directory, { recursive: true, force: true })
+  }
 })
 
 test('rejects missing deployment inputs without disclosing configured values', () => {
@@ -89,15 +125,15 @@ test('rejects placeholder IDs, invalid IDs, and short secrets before deployment'
 
 test('rejects malformed configuration, ambiguous DB bindings, and plaintext JWT secrets', () => {
   for (const invalid of [
-    '{ broken json',
-    'null',
-    '[]',
-    '{}',
-    '{ "d1_databases": {} }',
-    '{ "d1_databases": [null] }',
-    '{ "d1_databases": [{ "binding": "OTHER" }] }',
-    '{ "d1_databases": [{ "binding": "DB" }, { "binding": "DB" }] }',
-    '{ "d1_databases": [{ "binding": "DB" }], "vars": { "JWT_SECRET": "plaintext" } }',
+    'name = "unterminated',
+    'name = "one"\nname = "two"',
+    '',
+    '[d1_databases]\nbinding = "DB"',
+    'd1_databases = ["DB"]',
+    'd1_databases = [{ binding = "OTHER" }]',
+    'd1_databases = [{ binding = "DB" }, { binding = "DB" }]',
+    'd1_databases = [{ binding = "DB" }]\n[vars]\nJWT_SECRET = "plaintext"',
+    'd1_databases = [{ binding = "DB" }]\nvars = "invalid"',
   ]) {
     assert.throws(() => prepareDeployment(invalid, env))
   }
@@ -120,7 +156,7 @@ test('uses Terraform results and protects all public routes without copying runt
   const template = parse(source)
   template.vars = { OTHER: 'preserved', MCP_ORIGIN: 'https://old.example.com', ACCESS_MCP_AUDIENCE: 'old-audience' }
   template.routes = [{ pattern: 'unprotected.example.com', custom_domain: true }]
-  const { config, secrets } = prepareDeployment(JSON.stringify(template), { ...env, CLOUDFLARE_D1_DATABASE_ID: '' }, infrastructure)
+  const { config, secrets } = prepareDeployment(stringify(template), { ...env, CLOUDFLARE_D1_DATABASE_ID: '' }, infrastructure)
 
   assert.equal(config.d1_databases[0].database_id, infrastructure.database_id)
   assert.equal(config.d1_databases[0].database_name, infrastructure.database_name)

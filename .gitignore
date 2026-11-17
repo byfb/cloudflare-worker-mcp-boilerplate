@@ -2,7 +2,7 @@ node_modules/
 dist/
 .build/
 .astro/
-/wrangler.deploy.json
+/wrangler.deploy.*
 .wrangler/
 .dev.vars
 .dev.vars.*

@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { parse } from 'jsonc-parser'
+import { parse, stringify } from 'smol-toml'
 
 function required(env, name) {
   const value = env[name]
@@ -73,16 +73,18 @@ function applyInfrastructure(config, env, infrastructure) {
 }
 
 export function prepareDeployment(source, env, infrastructure) {
-  const errors = []
-  const config = parse(source, errors, { allowTrailingComma: true })
-  if (errors.length || !config || typeof config !== 'object' || Array.isArray(config)) {
-    throw new Error('wrangler.jsonc must contain a valid configuration object.')
+  let config
+  try {
+    config = parse(source)
+  } catch {
+    // Parser diagnostics may include source values; keep deployment errors safe to log.
+    throw new Error('wrangler.toml must contain valid TOML.')
   }
   const databases = Array.isArray(config.d1_databases)
     ? config.d1_databases.filter((database) => database?.binding === 'DB')
     : []
   if (databases.length !== 1) {
-    throw new Error('wrangler.jsonc must contain exactly one D1 binding named DB.')
+    throw new Error('wrangler.toml must contain exactly one D1 binding named DB.')
   }
   if (Object.hasOwn(config.vars ?? {}, 'JWT_SECRET')) {
     throw new Error('Configure JWT_SECRET as a deployment secret, not a Wrangler var.')
@@ -118,8 +120,8 @@ if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) 
       const infrastructure = process.env.CLOUDFLARE_INFRASTRUCTURE_OUTPUT
         ? JSON.parse(readFileSync(process.env.CLOUDFLARE_INFRASTRUCTURE_OUTPUT, 'utf8'))
         : undefined
-      const prepared = prepareDeployment(readFileSync(new URL('wrangler.jsonc', root), 'utf8'), process.env, infrastructure)
-      writeFileSync(new URL('wrangler.deploy.json', root), JSON.stringify(prepared.config, null, 2) + '\n', { mode: 0o600 })
+      const prepared = prepareDeployment(readFileSync(new URL('wrangler.toml', root), 'utf8'), process.env, infrastructure)
+      writeFileSync(new URL('wrangler.deploy.toml', root), stringify(prepared.config) + '\n', { mode: 0o600 })
       writeFileSync(join(tempDirectory, 'cloudflare-worker-secrets.json'), JSON.stringify(prepared.secrets) + '\n', { mode: 0o600 })
       console.log('Prepared deployment configuration and Worker secrets.')
     }

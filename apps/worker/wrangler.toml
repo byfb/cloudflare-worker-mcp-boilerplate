@@ -7,7 +7,7 @@ compatibility_flags = ["nodejs_compat"]
 ip = "127.0.0.1"
 inspector_port = 0
 
-# API-only local development. Deploy with the root wrangler.jsonc.
+# API-only local development. Deploy with the root wrangler.toml.
 [[d1_databases]]
 binding = "DB"
 database_name = "app-db"

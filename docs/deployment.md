@@ -6,8 +6,8 @@ and deployment are **disabled by default**. The separate CI workflow checks
 application code and runs Terraform validation with a mock provider on every
 push and pull request, without cloud credentials.
 
-The pnpm workspace builds `@app/web` into `apps/web/dist`. Root `wrangler.jsonc`
-and its generated `wrangler.deploy.json` use `apps/worker/src/app/index.ts` and
+The pnpm workspace builds `@app/web` into `apps/web/dist`. Root `wrangler.toml`
+and its generated `wrangler.deploy.toml` use `apps/worker/src/app/index.ts` and
 `apps/worker/migrations`, so the same deployment contains the Worker, static Astro
 pages, and the Worker-owned schema history.
 
@@ -185,7 +185,7 @@ Leave `CLOUDFLARE_TERRAFORM_ENABLED` unset or `false`.
 1. Create D1 once with `pnpm exec wrangler d1 create app-db`, or reuse a database.
 2. Configure custom domains, Cloudflare Access and Managed OAuth as described in
    [Access and MCP](access-and-mcp.md). Store non-secret Worker vars and routes in
-   root `wrangler.jsonc`.
+   root `wrangler.toml`.
 3. Set `CLOUDFLARE_D1_DATABASE_ID` to the existing database UUID. Optionally set
    `CLOUDFLARE_D1_DATABASE_NAME` to override the template's binding name.
 4. Configure the shared variables/secrets and enable the deployment switch.
@@ -209,7 +209,7 @@ intact until they have been explicitly transferred.
    skip both approval and `terraform apply`. Export the narrow `deployment`
    output in either case.
    D1 and Access protection exist before Wrangler attaches the hostname.
-5. Generate ignored `wrangler.deploy.json` alongside the source config, retaining
+5. Generate ignored `wrangler.deploy.toml` alongside the source config, retaining
    relative entrypoint, asset and migration paths. Write `JWT_SECRET` to a
    permission-restricted file in the runner's temporary directory.
 6. Validate the bundle with a Wrangler dry run, apply pending D1 migrations,
@@ -217,7 +217,7 @@ intact until they have been explicitly transferred.
 7. Clean up generated config, local and remote plans, output, backend metadata
    and secret files, including after failure.
 
-Deployment runs are serialized. The committed `wrangler.jsonc` keeps placeholder
+Deployment runs are serialized. The committed `wrangler.toml` keeps placeholder
 IDs, so template checks stay enabled. An apply or migration is not rolled back
 if a later step fails. Use migrations compatible with the currently running
 code and retry in a new workflow run using the same state key. The workflow

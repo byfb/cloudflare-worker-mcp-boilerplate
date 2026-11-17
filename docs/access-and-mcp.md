@@ -22,13 +22,13 @@ manage an email OTP provider or use existing IdPs. A separate `MCP_HOSTNAME`
 creates a second application and supplies the optional runtime overrides below.
 Follow the remaining manual setup only when provisioning infrastructure yourself.
 
-Add your hostname as a custom-domain route in root `wrangler.jsonc`. Configure one
+Add your hostname as a custom-domain route in root `wrangler.toml`. Configure one
 self-hosted Access application covering the **entire hostname**, enable Managed
 OAuth for MCP clients, and choose your identity provider and allow policies.
 Consult Cloudflare's [Managed OAuth guide](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/managed-oauth/)
 for current Access configuration and client callback requirements.
 
-Add these non-secret values to root `wrangler.jsonc` under `vars`:
+Add these non-secret values to root `wrangler.toml` under `[vars]`:
 
 | Variable | Value |
 | --- | --- |

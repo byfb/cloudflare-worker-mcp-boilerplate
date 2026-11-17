@@ -5,7 +5,7 @@ and `apps/web` (`@app/web`). The Worker owns all backend modules and D1 migratio
 there are no shared workspace packages until another consumer needs one.
 
 One Worker serves HTTP APIs and MCP. Cloudflare static assets serves the Astro
-pages from `apps/web/dist` in the same deployment. Root `wrangler.jsonc` coordinates
+pages from `apps/web/dist` in the same deployment. Root `wrangler.toml` coordinates
 both apps; `apps/worker/wrangler.toml` runs only the API during local development.
 API, MCP, discovery, and Access-provider paths run through the Worker first.
 Cloudflare [HTML handling](https://developers.cloudflare.com/workers/static-assets/routing/advanced/html-handling/)

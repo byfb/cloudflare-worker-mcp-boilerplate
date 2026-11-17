@@ -7,12 +7,12 @@
     "node": ">=22.23.4"
   },
   "scripts": {
-    "dev": "pnpm run build:web && pnpm exec wrangler dev --config wrangler.jsonc --persist-to .wrangler/state",
+    "dev": "pnpm run build:web && pnpm exec wrangler dev --config wrangler.toml --persist-to .wrangler/state",
     "dev:api": "pnpm exec wrangler dev --config apps/worker/wrangler.toml --persist-to .wrangler/state",
     "dev:web": "pnpm --filter @app/web run dev",
     "build:web": "pnpm --filter @app/web run build",
     "build:api": "pnpm exec wrangler deploy --dry-run --config apps/worker/wrangler.toml --outdir .build/api",
-    "build": "pnpm run build:web && pnpm exec wrangler deploy --dry-run --config wrangler.jsonc --outdir .build/worker",
+    "build": "pnpm run build:web && pnpm exec wrangler deploy --dry-run --config wrangler.toml --outdir .build/worker",
     "typecheck": "pnpm -r run typecheck",
     "test": "pnpm -r run test",
     "test:deploy": "node --test scripts/prepare-deploy.test.mjs scripts/terraform-workflow.test.mjs",
@@ -21,15 +21,15 @@
     "db:generate": "pnpm --filter @app/worker run db:generate",
     "db:check": "pnpm --filter @app/worker run db:check",
     "db:migrate": "pnpm exec wrangler d1 migrations apply DB --local --config apps/worker/wrangler.toml --persist-to .wrangler/state",
-    "db:migrate:remote": "pnpm exec wrangler d1 migrations apply DB --remote --config wrangler.jsonc",
-    "deploy": "pnpm run build:web && pnpm exec wrangler deploy --config wrangler.jsonc",
+    "db:migrate:remote": "pnpm exec wrangler d1 migrations apply DB --remote --config wrangler.toml",
+    "deploy": "pnpm run build:web && pnpm exec wrangler deploy --config wrangler.toml",
     "deploy:prepare": "node scripts/prepare-deploy.mjs",
     "ci": "pnpm run check:template && pnpm run db:check && pnpm run test:deploy && pnpm run typecheck && pnpm run test && pnpm run build",
     "dev:mcp": "pnpm exec wrangler dev --local --config apps/worker/dev/wrangler.toml",
     "setup:local": "node scripts/setup.mjs"
   },
   "devDependencies": {
-    "jsonc-parser": "3.3.1",
+    "smol-toml": "1.9.1",
     "wrangler": "4.127.1"
   }
 }

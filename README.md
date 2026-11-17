@@ -105,7 +105,7 @@ variables, and secrets.
 
 ## Make it your project
 
-1. Rename `app-worker` and `app-db` in `wrangler.jsonc`. The Worker package’s Wrangler
+1. Rename `app-worker` and `app-db` in `wrangler.toml`. The Worker package’s Wrangler
    config is for local development; keep its database name aligned if you rename it.
 2. Replace the generic package names, page title, PWA manifest, and `apps/web/public/icon.svg`.
    PNG icons are generated from that SVG during the web build.
@@ -133,19 +133,19 @@ pnpm exec wrangler login
 pnpm exec wrangler d1 create app-db
 ```
 
-Put the returned database ID into **root `wrangler.jsonc`**. Keep the all-zero ID
+Put the returned database ID into **root `wrangler.toml`**. Keep the all-zero ID
 in `apps/worker/wrangler.toml` for local development. Set a new, random production
 secret of at least 32 bytes, apply migrations, then deploy:
 
 ```sh
-pnpm exec wrangler secret put JWT_SECRET --config wrangler.jsonc
+pnpm exec wrangler secret put JWT_SECRET --config wrangler.toml
 pnpm run db:migrate:remote
 pnpm run deploy
 ```
 
 The deploy command serves the Worker and built web assets together. Root
-`wrangler.jsonc` is the deployment source; the optional GitHub workflow derives
-`wrangler.deploy.json` from it. Terraform mode supplies protected domain routes
+`wrangler.toml` is the deployment source; the optional GitHub workflow derives
+`wrangler.deploy.toml` from it. Terraform mode supplies protected domain routes
 and Access settings automatically; existing-infrastructure mode preserves yours.
 Account registration is open by default; decide your access and rate-limit policy
 before making a public service. Password hashing also needs a Worker CPU budget
@@ -173,7 +173,7 @@ apps/
 infra/cloudflare/          Optional Terraform D1 and Access infrastructure
 scripts/                   Local setup, deployment, and template hygiene
 docs/                      Architecture and Access/MCP setup
-wrangler.jsonc             Combined Worker + web deployment configuration
+wrangler.toml             Combined Worker + web deployment configuration
 ```
 
 ## License
