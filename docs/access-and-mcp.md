@@ -72,7 +72,7 @@ and other unprotected hostname routes as part of that deployment's routing polic
 The Worker does not implement an OAuth authorization server. Access owns
 discovery and login at the edge. An opaque bearer token alone is not accepted
 as a Worker identity. Without that edge setup, `/.well-known/*` returns 404;
-it must not return the SPA document.
+it must not return an Astro document.
 
 ## Client contract
 
@@ -103,7 +103,7 @@ appear as a new connection later. Revoke provider access separately when needed.
 ## Add an MCP operation
 
 1. Add its strict input schema, name, and discovery metadata to
-   `backend/apps/worker/mcp/contracts.ts`.
+   `apps/worker/src/app/mcp/contracts.ts`.
 2. Add a narrow capability in `types.ts`, wired from its owning module in the
    Worker composition root. Keep repository access out of the MCP adapter.
 3. Dispatch the operation in `server.ts` and explicitly select public output

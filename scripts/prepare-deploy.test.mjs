@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { test } from 'node:test'
 import { parse } from 'jsonc-parser'
 import { prepareDeployment, validateDeploymentCredentials } from './prepare-deploy.mjs'
@@ -28,6 +28,19 @@ test('injects deployment identifiers while preserving the template and relative 
   assert.deepEqual(secrets, { JWT_SECRET: env.JWT_SECRET })
   assert.ok(!JSON.stringify(config).includes(env.JWT_SECRET))
   assert.ok(!JSON.stringify({ config, secrets }).includes(env.CLOUDFLARE_API_TOKEN))
+})
+
+test('resolves the monorepo entrypoint, web package, and owned migrations from generated config', () => {
+  const { config } = prepareDeployment(source, env)
+  const root = new URL('../', import.meta.url)
+  assert.ok(existsSync(new URL(config.main, root)))
+  assert.ok(existsSync(new URL(`${config.assets.directory}/../package.json`, root)))
+  assert.ok(readdirSync(new URL(`${config.d1_databases[0].migrations_dir}/`, root)).some((name) => name.endsWith('.sql')))
+  assert.equal(config.assets.html_handling, 'drop-trailing-slash')
+  assert.equal(config.assets.not_found_handling, '404-page')
+  for (const path of ['/api/*', '/mcp*', '/.well-known/*', '/cdn-cgi/*']) {
+    assert.ok(config.assets.run_worker_first.includes(path))
+  }
 })
 
 test('keeps routing, Access settings, and other bindings while overriding the database name', () => {

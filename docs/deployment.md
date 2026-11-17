@@ -6,6 +6,11 @@ and deployment are **disabled by default**. The separate CI workflow checks
 application code and runs Terraform validation with a mock provider on every
 push and pull request, without cloud credentials.
 
+The pnpm workspace builds `@app/web` into `apps/web/dist`. Root `wrangler.jsonc`
+and its generated `wrangler.deploy.json` use `apps/worker/src/app/index.ts` and
+`apps/worker/migrations`, so the same deployment contains the Worker, static Astro
+pages, and the Worker-owned schema history.
+
 Application tables and queries use Drizzle ORM. Generate and review SQL with
 `pnpm run db:generate` before committing schema changes. The existing Wrangler
 migration step applies those committed files; CI never uses `drizzle-kit push`

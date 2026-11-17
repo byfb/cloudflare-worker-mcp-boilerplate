@@ -1,0 +1,28 @@
+---
+interface Props { register?: boolean }
+const { register = false } = Astro.props
+---
+<main class="auth-page">
+  <section class="auth-intro">
+    <img src="/icon.svg" width="48" height="48" alt="" />
+    <p class="eyebrow">APP STARTER</p>
+    <h1>A place to start.<br />Room to grow.</h1>
+    <p>Your application begins here.</p>
+  </section>
+  <section class="panel auth-form">
+    <h2>{register ? 'Create your account' : 'Welcome back'}</h2>
+    <p class="muted">{register ? 'Choose a username and password to get started.' : 'Sign in to your workspace.'}</p>
+    <form data-sign-in data-action={register ? 'register' : 'login'}>
+      <label>Username<input name="username" autocomplete="username" required minlength="3" maxlength="32" pattern="[A-Za-z0-9_]+" /></label>
+      <label>Password<input name="password" type="password" autocomplete={register ? 'new-password' : 'current-password'} required minlength="8" maxlength="256" /></label>
+      <p role="alert" class="error" data-sign-in-error hidden></p>
+      <button type="submit">{register ? 'Create account' : 'Sign in'}</button>
+    </form>
+    <p class="muted">{register ? 'Already have an account? ' : 'New here? '}<a href={register ? '/login' : '/register'}>{register ? 'Sign in' : 'Create an account'}</a></p>
+    {!register && <details>
+      <summary>Organization sign-in</summary>
+      <p class="muted">Use a previously linked access-provider account.</p>
+      <button class="secondary" type="button" data-access-sign-in>Continue with Access</button>
+    </details>}
+  </section>
+</main>

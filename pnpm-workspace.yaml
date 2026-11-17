@@ -1,6 +1,5 @@
 packages:
-  - backend
-  - web
+  - apps/*
 
 onlyBuiltDependencies:
   - esbuild

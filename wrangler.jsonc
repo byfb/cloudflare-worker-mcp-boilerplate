@@ -1,23 +1,24 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "app-worker",
-  "main": "backend/apps/worker/index.ts",
+  "main": "apps/worker/src/app/index.ts",
   "compatibility_date": "2026-09-01",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
   "dev": { "ip": "127.0.0.1", "inspector_port": 0 },
   "assets": {
-    "directory": "web/dist",
+    "directory": "apps/web/dist",
     "binding": "ASSETS",
-    "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api", "/api/*", "/mcp*", "/.well-known", "/.well-known/*"]
+    "html_handling": "drop-trailing-slash",
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/api", "/api/*", "/mcp*", "/.well-known", "/.well-known/*", "/cdn-cgi", "/cdn-cgi/*"]
   },
   "d1_databases": [{
     "binding": "DB",
     "database_name": "app-db",
     // Replace this local-only placeholder with your own D1 database ID.
     "database_id": "00000000-0000-0000-0000-000000000000",
-    "migrations_dir": "migrations"
+    "migrations_dir": "apps/worker/migrations"
   }],
   "observability": { "enabled": true }
   // Set JWT_SECRET through `wrangler secret put JWT_SECRET` for deployment.

@@ -6,16 +6,18 @@ credentials in ignored `.env` files and deployment secrets in Cloudflare.
 
 ## Boundaries
 
-- `backend/apps/worker` composes HTTP routes, authentication, and MCP capabilities.
-- `backend/modules/account` owns users, linked Access identities, and MCP connection records.
+- `apps/web` owns static Astro pages and browser TypeScript. Fetch account data
+  through the API after checking the session; keep it out of generated HTML and caches.
+- `apps/worker/src/app` composes HTTP routes, authentication, and MCP capabilities.
+- `apps/worker/src/modules/account` owns users, linked Access identities, and MCP connection records.
 - New business behavior belongs in a module that owns its data and rules. Start
   with the smallest useful module; introduce layers when behavior needs them.
-- `backend/platform` owns runtime, HTTP, D1, and authentication mechanics. It must
+- `apps/worker/src/platform` owns runtime, HTTP, D1, and authentication mechanics. It must
   remain independent of application modules.
 - Domain code imports only its own domain and the dependency-free shared kernel.
 - MCP receives the authenticated user from the request boundary. New tools must
   use narrow module capabilities, strict input schemas, and explicit output projections.
-- `backend/dev` contains synthetic local fixtures and must stay outside the
+- `apps/worker/dev` contains synthetic local fixtures and must stay outside the
   production import graph.
 
 Read [architecture](docs/architecture.md) when adding a module or changing its
