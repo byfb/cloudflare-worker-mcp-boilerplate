@@ -164,11 +164,11 @@ apps/
     tests/                 Database integration and architecture checks
     migrations/            Ordered D1 SQL and Drizzle snapshots
   web/                     @app/web
-    src/pages/             Static Astro routes
-    src/layouts/           Shared document and application shell
-    src/components/        Shared Astro markup
-    src/scripts/           Browser TypeScript for auth, home, and account
-    src/lib/               API, session, and DOM helpers
+    src/pages/             Thin Astro route adapters
+    src/app/               Application shell, startup, styles, and PWA policy
+    src/_pages/            FSD screen slices with markup and browser controllers
+    src/shared/            API transport, session, and DOM helpers
+    tests/                 Page integration and FSD architecture checks
     public/                PWA icons and static assets
 infra/cloudflare/          Optional Terraform D1 and Access infrastructure
 scripts/                   Local setup, deployment, and template hygiene

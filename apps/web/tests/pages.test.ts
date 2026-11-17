@@ -2,11 +2,11 @@ import { experimental_AstroContainer as AstroContainer } from 'astro/container'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { screen, waitFor } from '@testing-library/dom'
 import userEvent from '@testing-library/user-event'
-import Home from './pages/index.astro'
-import Login from './pages/login.astro'
-import Register from './pages/register.astro'
-import Account from './pages/account.astro'
-import { startPage } from './scripts/app'
+import Home from '../src/pages/index.astro'
+import Login from '../src/pages/login.astro'
+import Register from '../src/pages/register.astro'
+import Account from '../src/pages/account.astro'
+import { startPage } from '@/app/bootstrap'
 
 const session = { user_id: 'member-id', username: 'member', csrf: 'test-csrf' }
 const unauthorized = () => Response.json({ code: 'unauthenticated' }, { status: 401 })

@@ -1,5 +1,5 @@
-import { ApiError, apiFetch } from './api'
-import { errorMessage } from './dom'
+import { ApiError, apiFetch } from '@/shared/api'
+import { errorMessage } from '@/shared/lib'
 
 export interface SessionUser { user_id: string; username: string; csrf: string }
 export type Navigate = (path: string) => void

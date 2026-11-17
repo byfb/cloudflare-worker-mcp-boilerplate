@@ -1,6 +1,6 @@
-import { apiFetch, authenticatedRequest } from '../lib/api'
-import { element, errorMessage, showError } from '../lib/dom'
-import type { SessionUser } from '../lib/session'
+import { apiFetch, authenticatedRequest } from '@/shared/api'
+import { element, errorMessage, showError } from '@/shared/lib'
+import type { SessionUser } from '@/shared/auth'
 
 interface Connection {
   client_key: string; display_name: string; client_version: string

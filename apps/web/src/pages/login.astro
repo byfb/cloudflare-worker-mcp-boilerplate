@@ -1,5 +1,5 @@
 ---
-import Layout from '../layouts/Layout.astro'
-import SignIn from '../components/SignIn.astro'
+import { AppLayout } from '@/app/ui'
+import { SignInPage } from '@/_pages/sign-in/index.server'
 ---
-<Layout page="login"><SignIn /></Layout>
+<AppLayout page="login"><SignInPage /></AppLayout>

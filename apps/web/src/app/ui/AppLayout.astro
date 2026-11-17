@@ -1,5 +1,5 @@
 ---
-import '../styles.css'
+import '../styles/global.css'
 
 interface Props { page: 'home' | 'account' | 'login' | 'register' }
 const { page } = Astro.props
@@ -30,7 +30,7 @@ const { page } = Astro.props
     <div data-page-content hidden><slot /></div>
     <noscript><p class="container">Enable JavaScript to sign in and use your account.</p></noscript>
     <script>
-      import { startPage } from '../scripts/app'
+      import { startPage } from '../bootstrap'
       import { registerSW } from 'virtual:pwa-register'
 
       void startPage()

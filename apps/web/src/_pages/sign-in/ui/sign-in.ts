@@ -1,6 +1,6 @@
-import { apiFetch } from '../lib/api'
-import { element, errorMessage, showError } from '../lib/dom'
-import type { Navigate, SessionUser } from '../lib/session'
+import { apiFetch } from '@/shared/api'
+import { element, errorMessage, showError } from '@/shared/lib'
+import type { Navigate, SessionUser } from '@/shared/auth'
 
 export function initializeSignIn(sessionError: string | null, navigate: Navigate) {
   const form = element<HTMLFormElement>('[data-sign-in]')
