@@ -6,6 +6,8 @@ credentials in ignored `.env` files and deployment secrets in Cloudflare.
 
 ## Boundaries
 
+- `apps/web` owns static Astro pages and browser TypeScript. Fetch account data
+  through the API after checking the session; keep it out of generated HTML and caches.
 - `apps/worker/src/app` composes HTTP routes, authentication, and MCP capabilities.
 - `apps/worker/src/modules/account` owns users, linked Access identities, and MCP connection records.
 - New business behavior belongs in a module that owns its data and rules. Start

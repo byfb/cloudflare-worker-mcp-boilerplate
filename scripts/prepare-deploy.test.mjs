@@ -36,6 +36,11 @@ test('resolves the monorepo entrypoint, web package, and owned migrations from g
   assert.ok(existsSync(new URL(config.main, root)))
   assert.ok(existsSync(new URL(`${config.assets.directory}/../package.json`, root)))
   assert.ok(readdirSync(new URL(`${config.d1_databases[0].migrations_dir}/`, root)).some((name) => name.endsWith('.sql')))
+  assert.equal(config.assets.html_handling, 'drop-trailing-slash')
+  assert.equal(config.assets.not_found_handling, '404-page')
+  for (const path of ['/api/*', '/mcp*', '/.well-known/*', '/cdn-cgi/*']) {
+    assert.ok(config.assets.run_worker_first.includes(path))
+  }
 })
 
 test('keeps routing, Access settings, and other bindings while overriding the database name', () => {

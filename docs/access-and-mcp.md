@@ -72,7 +72,7 @@ and other unprotected hostname routes as part of that deployment's routing polic
 The Worker does not implement an OAuth authorization server. Access owns
 discovery and login at the edge. An opaque bearer token alone is not accepted
 as a Worker identity. Without that edge setup, `/.well-known/*` returns 404;
-it must not return the SPA document.
+it must not return an Astro document.
 
 ## Client contract
 

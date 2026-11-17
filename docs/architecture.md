@@ -4,11 +4,19 @@ The pnpm monorepo contains two application packages: `apps/worker` (`@app/worker
 and `apps/web` (`@app/web`). The Worker owns all backend modules and D1 migrations;
 there are no shared workspace packages until another consumer needs one.
 
-One Worker serves HTTP APIs and MCP. Cloudflare static assets serves the React
-application from the same deployment. API, MCP, and discovery paths run through
-the Worker first; the service worker also excludes them from navigation fallback.
-Cloudflare's [SPA routing documentation](https://developers.cloudflare.com/workers/static-assets/routing/single-page-application/)
-describes the routing mechanism.
+One Worker serves HTTP APIs and MCP. Cloudflare static assets serves the Astro
+pages from `apps/web/dist` in the same deployment. Root `wrangler.jsonc` coordinates
+both apps; `apps/worker/wrangler.toml` runs only the API during local development.
+API, MCP, discovery, and Access-provider paths run through the Worker first.
+Cloudflare [HTML handling](https://developers.cloudflare.com/workers/static-assets/routing/advanced/html-handling/)
+serves each generated HTML page at its extensionless URL, with trailing slashes removed.
+
+Astro builds `/`, `/login`, `/register`, and `/account` as static HTML. Shared
+layouts and components own markup; browser TypeScript owns interactivity. Links
+use ordinary document navigation. Every page checks the session through the API
+before revealing its content; account data never enters the generated HTML.
+Returning from the browser’s back/forward cache also reloads the session.
+Unknown document routes use the 404 page to return to `/`.
 
 ## Ownership
 
@@ -76,5 +84,8 @@ default; `MCP_ORIGIN` and `ACCESS_MCP_AUDIENCE` independently override those def
 Each boundary verifies its configured audience. Linking is explicit, keyed by
 verified issuer/subject; matching email addresses never merge accounts.
 
-The PWA caches the application shell only. Authenticated data stays network-only;
-there is no offline write queue or account-data cache.
+The Astro PWA integration precaches each page and its static assets. Clean URLs
+resolve to their matching cached HTML, rather than one shared index document.
+Unknown navigation uses the 404 redirect page. API, MCP, discovery, and Access
+requests bypass navigation fallback and stay network-only. Authenticated data is
+kept in page memory; there is no offline write queue or account-data cache.

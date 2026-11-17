@@ -1,5 +1,6 @@
 :root { font-family: ui-sans-serif, system-ui, sans-serif; color: #21382f; background: #f5f7f5; font-synthesis: none; line-height: 1.6; }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body { margin: 0; }
 a { color: #24654b; text-underline-offset: 4px; }
 h1, h2, p { margin-top: 0; }

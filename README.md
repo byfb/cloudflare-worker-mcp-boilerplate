@@ -1,7 +1,7 @@
 # Cloudflare Worker + MCP boilerplate
 
 A domain-neutral TypeScript foundation for a Cloudflare Worker, D1 database,
-React application, and authenticated remote MCP server.
+Astro application, and authenticated remote MCP server.
 
 ## Included
 
@@ -14,7 +14,7 @@ React application, and authenticated remote MCP server.
   allowlisted `exec` command catalog and one example: `get_user_profile`.
 - Account-scoped MCP connection controls, bounded requests/results, timeouts,
   and audit events that omit arguments, results, and raw identities.
-- A neutral React app with sign-in, account settings, and a PWA app shell.
+- Static Astro pages with TypeScript for sign-in, account settings, and a PWA app shell.
 - A fresh account schema, behavioral tests, build checks, and setup documentation.
 
 All infrastructure IDs are placeholders. There are no configured accounts,
@@ -22,7 +22,8 @@ custom domains, credentials, product data, historical migrations, or old plans.
 
 ## Run locally
 
-Use Node.js 24 and pnpm 10.33.2. All commands below run from the repository root.
+Use Node.js 24 and pnpm 10.33.2 (minimum Node.js 22.23.4).
+All commands below run from the repository root.
 
 ```sh
 pnpm install --frozen-lockfile
@@ -47,10 +48,10 @@ pnpm run dev:api
 pnpm run dev:web
 ```
 
-Open **http://localhost:5173**. Vite proxies API and MCP requests to the local
-Worker. Use `localhost` in your browser because the session cookie is `Secure`.
+Open **http://localhost:5173**. Astro’s development server proxies API and MCP
+requests to the local Worker. Use `localhost` because the session cookie is `Secure`.
 Both development modes and migrations share `.wrangler/state` in the repo root.
-The PWA service worker is built for the production preview, not the Vite dev server.
+The PWA service worker is built for the production preview, not the Astro dev server.
 
 ## Try MCP without provisioning Access
 
@@ -83,7 +84,7 @@ and how to add operations.
 pnpm run ci
 ```
 
-This checks template hygiene, Drizzle migration metadata, TypeScript, Worker and
+This checks template hygiene, Drizzle migration metadata, Astro/TypeScript, Worker and
 web tests, the web build, and a non-deploying bundle using the production
 Worker configuration. Schema tests compare the typed tables with migration
 snapshots and exercise constraints against SQLite.
@@ -162,7 +163,13 @@ apps/
     dev/                   Synthetic local MCP server
     tests/                 Database integration and architecture checks
     migrations/            Ordered D1 SQL and Drizzle snapshots
-  web/                     @app/web (React + Vite application and PWA assets)
+  web/                     @app/web
+    src/pages/             Static Astro routes
+    src/layouts/           Shared document and application shell
+    src/components/        Shared Astro markup
+    src/scripts/           Browser TypeScript for auth, home, and account
+    src/lib/               API, session, and DOM helpers
+    public/                PWA icons and static assets
 infra/cloudflare/          Optional Terraform D1 and Access infrastructure
 scripts/                   Local setup, deployment, and template hygiene
 docs/                      Architecture and Access/MCP setup
