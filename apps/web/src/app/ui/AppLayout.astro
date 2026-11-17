@@ -17,18 +17,18 @@ const { page } = Astro.props
     <title>App Starter</title>
   </head>
   <body data-page={page}>
-    <div class="banner" role="status" data-offline hidden>You’re offline. Connect to use your account.</div>
-    <main class="loading" role="status" data-session-loading>Loading your workspace…</main>
-    <header class="header" data-auth-header hidden>
-      <a class="brand" href="/"><img src="/icon.svg" width="28" height="28" alt="" /> App Starter</a>
-      <nav aria-label="Main">
-        <a href="/">Home</a><a href="/account">Account</a>
-        <button class="secondary" type="button" data-sign-out>Sign out</button>
+    <div class="bg-warning-surface p-2 text-center" role="status" data-offline hidden>You’re offline. Connect to use your account.</div>
+    <main class="grid min-h-[70vh] place-items-center text-muted" role="status" data-session-loading>Loading your workspace…</main>
+    <header class="flex items-center justify-between border-b border-outline bg-white px-[4%] py-[1.2rem] compact:flex-wrap compact:gap-4" data-auth-header hidden>
+      <a class="flex items-center gap-[0.7rem] font-[750] text-ink no-underline" href="/"><img src="/icon.svg" width="28" height="28" alt="" /> App Starter</a>
+      <nav class="flex items-center gap-6 text-[0.9rem] compact:gap-4" aria-label="Main">
+        <a class="no-underline" href="/">Home</a><a class="no-underline" href="/account">Account</a>
+        <button class="border-control bg-transparent text-primary hover:bg-soft" type="button" data-sign-out>Sign out</button>
       </nav>
     </header>
-    <p role="alert" class="error container" data-shell-error hidden></p>
+    <p role="alert" class="mx-auto my-18 max-w-[1040px] rounded-lg bg-error-surface px-4 py-[0.8rem] text-error compact:mt-10" data-shell-error hidden></p>
     <div data-page-content hidden><slot /></div>
-    <noscript><p class="container">Enable JavaScript to sign in and use your account.</p></noscript>
+    <noscript><p class="mx-auto my-18 max-w-[1040px] px-6 compact:mt-10">Enable JavaScript to sign in and use your account.</p></noscript>
     <script>
       import { startPage } from '../bootstrap'
       import { registerSW } from 'virtual:pwa-register'

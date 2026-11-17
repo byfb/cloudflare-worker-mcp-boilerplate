@@ -14,7 +14,7 @@ Astro application, and authenticated remote MCP server.
   allowlisted `exec` command catalog and one example: `get_user_profile`.
 - Account-scoped MCP connection controls, bounded requests/results, timeouts,
   and audit events that omit arguments, results, and raw identities.
-- Static Astro pages with TypeScript for sign-in, account settings, and a PWA app shell.
+- Static Astro pages with Tailwind CSS and TypeScript for sign-in, account settings, and a PWA app shell.
 - A fresh account schema, behavioral tests, build checks, and setup documentation.
 
 All infrastructure IDs are placeholders. There are no configured accounts,

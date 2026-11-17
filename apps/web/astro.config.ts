@@ -1,4 +1,5 @@
 import { defineConfig } from 'astro/config'
+import tailwindcss from '@tailwindcss/vite'
 import { AstroPWAIntegration } from '@vite-pwa/astro'
 import { edgeNavigationDenylist } from './src/app/config'
 
@@ -8,6 +9,7 @@ export default defineConfig({
   build: { format: 'file' },
   server: { host: 'localhost', port: 5173 },
   vite: {
+    plugins: [tailwindcss()],
     server: {
       strictPort: true,
       proxy: Object.fromEntries(['/api', '/mcp', '/.well-known', '/cdn-cgi'].map((path) => [path, 'http://127.0.0.1:8787'])),

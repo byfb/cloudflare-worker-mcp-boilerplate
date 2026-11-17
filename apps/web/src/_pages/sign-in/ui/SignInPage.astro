@@ -2,27 +2,27 @@
 interface Props { register?: boolean }
 const { register = false } = Astro.props
 ---
-<main class="auth-page">
-  <section class="auth-intro">
-    <img src="/icon.svg" width="48" height="48" alt="" />
-    <p class="eyebrow">APP STARTER</p>
-    <h1>A place to start.<br />Room to grow.</h1>
-    <p>Your application begins here.</p>
+<main class="mx-auto grid min-h-screen max-w-[1080px] grid-cols-2 items-center gap-20 px-8 py-12 compact:grid-cols-1 compact:gap-8 compact:px-5 compact:py-8">
+  <section>
+    <img class="mb-10 inline align-baseline compact:mb-4" src="/icon.svg" width="48" height="48" alt="" />
+    <p class="mb-5 text-[0.72rem] font-bold tracking-[0.15em] text-eyebrow">APP STARTER</p>
+    <h1 class="compact:text-[2.3rem]">A place to start.<br />Room to grow.</h1>
+    <p class="text-[1.1rem] text-muted">Your application begins here.</p>
   </section>
-  <section class="panel auth-form">
+  <section class="m-0 w-full max-w-[440px] rounded-[14px] border border-outline bg-white p-[2.4rem] compact:max-w-none compact:p-6">
     <h2>{register ? 'Create your account' : 'Welcome back'}</h2>
-    <p class="muted">{register ? 'Choose a username and password to get started.' : 'Sign in to your workspace.'}</p>
-    <form data-sign-in data-action={register ? 'register' : 'login'}>
+    <p class="text-muted">{register ? 'Choose a username and password to get started.' : 'Sign in to your workspace.'}</p>
+    <form class="mt-8 mb-6" data-sign-in data-action={register ? 'register' : 'login'}>
       <label>Username<input name="username" autocomplete="username" required minlength="3" maxlength="32" pattern="[A-Za-z0-9_]+" /></label>
       <label>Password<input name="password" type="password" autocomplete={register ? 'new-password' : 'current-password'} required minlength="8" maxlength="256" /></label>
-      <p role="alert" class="error" data-sign-in-error hidden></p>
-      <button type="submit">{register ? 'Create account' : 'Sign in'}</button>
+      <p role="alert" class="rounded-lg bg-error-surface px-4 py-[0.8rem] text-error" data-sign-in-error hidden></p>
+      <button class="w-full" type="submit">{register ? 'Create account' : 'Sign in'}</button>
     </form>
-    <p class="muted">{register ? 'Already have an account? ' : 'New here? '}<a href={register ? '/login' : '/register'}>{register ? 'Sign in' : 'Create an account'}</a></p>
-    {!register && <details>
-      <summary>Organization sign-in</summary>
-      <p class="muted">Use a previously linked access-provider account.</p>
-      <button class="secondary" type="button" data-access-sign-in>Continue with Access</button>
+    <p class="text-muted">{register ? 'Already have an account? ' : 'New here? '}<a href={register ? '/login' : '/register'}>{register ? 'Sign in' : 'Create an account'}</a></p>
+    {!register && <details class="border-t border-divider pt-4 text-[0.9rem]">
+      <summary class="cursor-pointer text-muted">Organization sign-in</summary>
+      <p class="mt-4 text-muted">Use a previously linked access-provider account.</p>
+      <button class="border-control bg-transparent text-primary hover:bg-soft" type="button" data-access-sign-in>Continue with Access</button>
     </details>}
   </section>
 </main>

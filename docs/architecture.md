@@ -29,7 +29,7 @@ controllers; new page behavior starts in its consuming slice.
 | `src/pages` | Astro route adapters compose the App layout and a page's public API |
 | `src/app/ui` | Application document, navigation, and session-loading shell |
 | `src/app/bootstrap` | Session gating, sign-out, and page initialization |
-| `src/app/styles` | Global styles |
+| `src/app/styles` | Tailwind entry point, theme tokens, and base element styles |
 | `src/app/config` | PWA navigation policy |
 | `src/_pages/home` | Workspace screen and health status |
 | `src/_pages/account` | Profile, linked identities, and MCP connection controls |
@@ -56,6 +56,13 @@ The current thin client needs no Features, Entities, or Widgets layer. Extract
 a feature or domain model only when multiple consumers need a focused, stable
 boundary. Login and registration share one slice because their markup and
 controller change together. PWA icons remain in `public` for their fixed URLs.
+
+Tailwind CSS runs through its Vite plugin in `astro.config.ts`. The global
+stylesheet scans `src` for utilities, defines the theme with `@theme`, and keeps
+shared typography and form-control defaults in `@layer base`. Page and layout
+markup use utility classes; `compact:` applies at widths up to 700px. Keep class
+names complete in templates or TypeScript so Tailwind can detect them at build
+time. The built CSS is included in the PWA's static precache.
 
 `apps/web/tests/architecture.test.ts` checks layer direction, slice isolation,
 public APIs, and the browser/server boundary in TypeScript and Astro imports.

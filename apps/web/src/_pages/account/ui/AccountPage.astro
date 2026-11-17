@@ -1,24 +1,26 @@
-<main class="container narrow" data-account>
-  <p class="eyebrow">SETTINGS</p><h1>Your account</h1>
-  <p role="alert" class="error" data-account-error hidden></p>
-  <section class="panel"><h2>Profile</h2><p class="muted">Username</p><strong data-username></strong></section>
-  <section class="panel">
+<main class="mx-auto my-18 max-w-[820px] px-6 compact:mt-10" data-account>
+  <p class="mb-5 text-[0.72rem] font-bold tracking-[0.15em] text-eyebrow">SETTINGS</p><h1>Your account</h1>
+  <p role="alert" class="rounded-lg bg-error-surface px-4 py-[0.8rem] text-error" data-account-error hidden></p>
+  <section class="mb-5 rounded-[14px] border border-outline bg-white p-8 compact:p-6">
+    <h2>Profile</h2><p class="text-muted">Username</p><strong data-username></strong>
+  </section>
+  <section class="mb-5 rounded-[14px] border border-outline bg-white p-8 compact:p-6">
     <h2>Organization sign-in</h2>
     <p>Link your access-provider identity to sign in and authorize application connections.</p>
     <div data-identities></div>
-    <button class="secondary" type="button" data-link-identity>Link current Access identity</button>
+    <button class="border-control bg-transparent text-primary hover:bg-soft" type="button" data-link-identity>Link current Access identity</button>
   </section>
-  <section class="panel">
+  <section class="mb-5 rounded-[14px] border border-outline bg-white p-8 compact:p-6">
     <h2>Connected applications</h2>
-    <p class="muted">These controls apply to the client name reported by each application. Disconnecting here does not revoke the provider’s OAuth grant.</p>
+    <p class="text-muted">These controls apply to the client name reported by each application. Disconnecting here does not revoke the provider’s OAuth grant.</p>
     <p role="status" data-connections-status>Loading connections…</p>
-    <ul class="connections" data-connections hidden></ul>
+    <ul class="my-4 list-none p-0" data-connections hidden></ul>
     <template data-connection-template>
-      <li>
-        <div><strong data-client-name></strong><p class="muted" data-client-status></p></div>
-        <div class="actions">
-          <button class="secondary" type="button" data-toggle-connection></button>
-          <button class="secondary" type="button" data-forget-connection hidden>Forget</button>
+      <li class="flex items-center justify-between gap-4 border-t border-divider py-5 compact:flex-col compact:items-start">
+        <div><strong data-client-name></strong><p class="mt-[0.3rem] mb-0 text-[0.85rem] text-muted" data-client-status></p></div>
+        <div class="flex flex-wrap gap-2">
+          <button class="border-control bg-transparent text-primary hover:bg-soft" type="button" data-toggle-connection></button>
+          <button class="border-control bg-transparent text-primary hover:bg-soft" type="button" data-forget-connection hidden>Forget</button>
         </div>
       </li>
     </template>
