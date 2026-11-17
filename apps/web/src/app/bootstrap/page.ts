@@ -1,9 +1,9 @@
-import { ApiError, authenticatedRequest } from '../lib/api'
-import { element, errorMessage, showError } from '../lib/dom'
-import { loadSession, type Navigate } from '../lib/session'
-import { initializeAccount } from './account'
-import { initializeHome } from './home'
-import { initializeSignIn } from './sign-in'
+import { ApiError, authenticatedRequest } from '@/shared/api'
+import { element, errorMessage, showError } from '@/shared/lib'
+import { loadSession, type Navigate } from '@/shared/auth'
+import { initializeAccount } from '@/_pages/account'
+import { initializeHome } from '@/_pages/home'
+import { initializeSignIn } from '@/_pages/sign-in'
 
 export async function startPage(navigate: Navigate = (path) => window.location.replace(path)) {
   const banner = element('[data-offline]')

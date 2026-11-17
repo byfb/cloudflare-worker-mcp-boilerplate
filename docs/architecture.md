@@ -18,6 +18,50 @@ before revealing its content; account data never enters the generated HTML.
 Returning from the browser’s back/forward cache also reloads the session.
 Unknown document routes use the 404 page to return to `/`.
 
+## Web structure
+
+`apps/web` follows Feature-Sliced Design v2.1 with three layers:
+`app` → `_pages` → `shared`. Page slices own screen markup and browser
+controllers; new page behavior starts in its consuming slice.
+
+| Location | Responsibility |
+| --- | --- |
+| `src/pages` | Astro route adapters compose the App layout and a page's public API |
+| `src/app/ui` | Application document, navigation, and session-loading shell |
+| `src/app/bootstrap` | Session gating, sign-out, and page initialization |
+| `src/app/styles` | Global styles |
+| `src/app/config` | PWA navigation policy |
+| `src/_pages/home` | Workspace screen and health status |
+| `src/_pages/account` | Profile, linked identities, and MCP connection controls |
+| `src/_pages/sign-in` | Login and registration variants of the same account-entry screen |
+| `src/_pages/not-found` | Unknown-route fallback |
+| `src/shared/api` | HTTP transport, API errors, and CSRF request headers |
+| `src/shared/auth` | Session loading and session types |
+| `src/shared/lib` | DOM and error-display helpers |
+
+Astro reserves `src/pages` for routing, so the FSD Pages layer uses `_pages`.
+Route adapters sit at the application composition boundary: they import the
+App layout and page API without placing screen logic in the routes. This keeps
+page slices independent of the App layer. `@/*` resolves to `src/*`.
+
+Each page slice exposes `index.ts`; slices with browser controllers also expose
+`index.server.ts` for static Astro markup. Browser code imports only `index.ts`
+so Astro templates never enter its module graph. Shared has one public API per
+segment, such as `@/shared/api`, with no top-level Shared barrel. Imports within
+a slice stay local; imports across boundaries use these public APIs. Page slices
+cannot import each other or higher layers. App and Shared segments may depend on
+other segments in their own layer.
+
+The current thin client needs no Features, Entities, or Widgets layer. Extract
+a feature or domain model only when multiple consumers need a focused, stable
+boundary. Login and registration share one slice because their markup and
+controller change together. PWA icons remain in `public` for their fixed URLs.
+
+`apps/web/tests/architecture.test.ts` checks layer direction, slice isolation,
+public APIs, and the browser/server boundary in TypeScript and Astro imports.
+Page integration tests render the route adapters and exercise the same session
+and account flows used by the browser.
+
 ## Ownership
 
 | Area | Responsibility |

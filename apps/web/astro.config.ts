@@ -1,6 +1,6 @@
 import { defineConfig } from 'astro/config'
 import { AstroPWAIntegration } from '@vite-pwa/astro'
-import { edgeNavigationDenylist } from './src/edge-routing'
+import { edgeNavigationDenylist } from './src/app/config'
 
 export default defineConfig({
   output: 'static',

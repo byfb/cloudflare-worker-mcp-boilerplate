@@ -1,14 +1,5 @@
 ---
-import Layout from '../layouts/Layout.astro'
+import { AppLayout } from '@/app/ui'
+import { HomePage } from '@/_pages/home/index.server'
 ---
-<Layout page="home">
-  <main class="container">
-    <p class="eyebrow">YOUR WORKSPACE</p>
-    <h1>Ready for your next idea.</h1>
-    <p class="lead">This is the starting point for your application.</p>
-    <div class="cards">
-      <section class="panel"><p class="eyebrow">ACCOUNT</p><h2>Make yourself at home</h2><p>Manage your sign-in and connected applications.</p><a href="/account">Open account settings →</a></section>
-      <section class="panel"><p class="eyebrow">CONNECTION</p><h2 aria-live="polite" data-health>Checking connection…</h2><p>Your workspace is ready when you are.</p></section>
-    </div>
-  </main>
-</Layout>
+<AppLayout page="home"><HomePage /></AppLayout>

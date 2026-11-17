@@ -1,5 +1,5 @@
-import { apiFetch } from '../lib/api'
-import { element } from '../lib/dom'
+import { apiFetch } from '@/shared/api'
+import { element } from '@/shared/lib'
 
 export async function initializeHome() {
   const status = element('[data-health]')

@@ -5,7 +5,7 @@ export default getViteConfig({
   test: {
     environment: './tests/environment.ts',
     globals: true,
-    setupFiles: ['./src/test-setup.ts'],
+    setupFiles: ['./tests/setup.ts'],
     restoreMocks: true,
   },
 })

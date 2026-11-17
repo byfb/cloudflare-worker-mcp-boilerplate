@@ -1,31 +1,5 @@
 ---
-import Layout from '../layouts/Layout.astro'
+import { AppLayout } from '@/app/ui'
+import { AccountPage } from '@/_pages/account/index.server'
 ---
-<Layout page="account">
-  <main class="container narrow" data-account>
-    <p class="eyebrow">SETTINGS</p><h1>Your account</h1>
-    <p role="alert" class="error" data-account-error hidden></p>
-    <section class="panel"><h2>Profile</h2><p class="muted">Username</p><strong data-username></strong></section>
-    <section class="panel">
-      <h2>Organization sign-in</h2>
-      <p>Link your access-provider identity to sign in and authorize application connections.</p>
-      <div data-identities></div>
-      <button class="secondary" type="button" data-link-identity>Link current Access identity</button>
-    </section>
-    <section class="panel">
-      <h2>Connected applications</h2>
-      <p class="muted">These controls apply to the client name reported by each application. Disconnecting here does not revoke the provider’s OAuth grant.</p>
-      <p role="status" data-connections-status>Loading connections…</p>
-      <ul class="connections" data-connections hidden></ul>
-      <template data-connection-template>
-        <li>
-          <div><strong data-client-name></strong><p class="muted" data-client-status></p></div>
-          <div class="actions">
-            <button class="secondary" type="button" data-toggle-connection></button>
-            <button class="secondary" type="button" data-forget-connection hidden>Forget</button>
-          </div>
-        </li>
-      </template>
-    </section>
-  </main>
-</Layout>
+<AppLayout page="account"><AccountPage /></AppLayout>
