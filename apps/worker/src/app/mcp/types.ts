@@ -1,8 +1,8 @@
 import type {
   McpClientInfo,
   McpConnectionActivity,
-} from "../../../modules/account/public/mcp-connections";
-import type { AccountProfileReadCapability } from "../../../modules/account/public/profile";
+} from "../../modules/account/public/mcp-connections";
+import type { AccountProfileReadCapability } from "../../modules/account/public/profile";
 import type { McpAuditToolName } from "./contracts";
 
 /** Minimal identity admitted into the MCP adapter after Access verification. */

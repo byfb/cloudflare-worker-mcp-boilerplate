@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { createTestDatabase } from '../../../tests/sqlite-d1'
+import { createTestDatabase } from '../../../../tests/sqlite-d1'
 import { D1McpConnectionRepository } from './d1-mcp-connections'
 
 const authorization = {

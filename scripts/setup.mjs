@@ -3,7 +3,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
 const root = new URL('../', import.meta.url)
-const files = ['.env', 'backend/.env'].map((name) => new URL(name, root))
+const files = ['.env', 'apps/worker/.env'].map((name) => new URL(name, root))
 const existing = files.find((file) => existsSync(file))
 const content = existing
   ? readFileSync(existing, 'utf8')

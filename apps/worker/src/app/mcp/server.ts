@@ -31,7 +31,7 @@ import {
   apiErrorBody,
   apiErrorStatus,
   isApiError,
-} from "../../../platform/http/api-error";
+} from "../../platform/http/api-error";
 
 const SERVER_INFO = { name: "worker-mcp", version: "0.1.0" } as const;
 export const MCP_TOOL_TIMEOUT_MS = 10_000;

@@ -1,5 +1,5 @@
-import type { AccessAssertionVerifierConfig } from "../../platform/auth/access";
-import { ApiError } from "../../platform/http/api-error";
+import type { AccessAssertionVerifierConfig } from "../platform/auth/access";
+import { ApiError } from "../platform/http/api-error";
 
 export interface AccessWorkerEnv {
   ACCESS_ISSUER?: unknown;

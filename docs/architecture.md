@@ -1,5 +1,9 @@
 # Architecture
 
+The pnpm monorepo contains two application packages: `apps/worker` (`@app/worker`)
+and `apps/web` (`@app/web`). The Worker owns all backend modules and D1 migrations;
+there are no shared workspace packages until another consumer needs one.
+
 One Worker serves HTTP APIs and MCP. Cloudflare static assets serves the React
 application from the same deployment. API, MCP, and discovery paths run through
 the Worker first; the service worker also excludes them from navigation fallback.
@@ -32,14 +36,14 @@ and [deployment](deployment.md) for ownership and execution details.
 ## Add a feature
 
 1. Name the business capability and the data it owns. Place it under
-   `backend/modules/<capability>`; avoid empty layers and generic CRUD frameworks.
+   `apps/worker/src/modules/<capability>`; avoid empty layers and generic CRUD frameworks.
 2. Keep invariants next to the owning model. Add application services and
    repository boundaries when orchestration and persistence need to vary independently.
 3. Define typed tables in the module's `persistence/schema.ts` and use Drizzle's
    query builder in its repository. Generate and review ordered migrations with
    `pnpm run db:generate`. Each table has one write owner. Wrangler applies
    migrations explicitly before code that requires them; see [database setup](database.md).
-4. Register HTTP handlers in `backend/apps/worker/index.ts`. Authenticate before
+4. Register HTTP handlers in `apps/worker/src/app/index.ts`. Authenticate before
    reading account data, and verify CSRF before parsing an authenticated mutation.
 5. Share a narrow capability through the module's `public` entrypoint for MCP or
    another module. Pass the authenticated user ID from composition; tool input

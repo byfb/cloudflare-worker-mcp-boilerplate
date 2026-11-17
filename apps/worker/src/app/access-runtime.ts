@@ -2,7 +2,7 @@ import {
   createAccessAssertionVerifier,
   type AccessAssertionVerifier,
   type AccessAssertionVerifierConfig,
-} from "../../platform/auth";
+} from "../platform/auth";
 import {
   accessWorkerConfig,
   accessWorkerConfigKey,

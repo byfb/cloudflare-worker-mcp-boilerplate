@@ -1,6 +1,6 @@
 import { DatabaseSync, type SQLInputValue } from 'node:sqlite'
 import { readFileSync, readdirSync } from 'node:fs'
-import type { D1Database, D1PreparedStatement, D1Result } from '../platform/d1'
+import type { D1Database, D1PreparedStatement, D1Result } from '../src/platform/d1'
 
 type Stage = 'bind' | 'query' | 'run'
 interface Hooks {
@@ -12,7 +12,7 @@ interface Hooks {
 export function createTestDatabase(hooks: Hooks = {}) {
   const sqlite = new DatabaseSync(':memory:')
   sqlite.exec('PRAGMA foreign_keys = ON')
-  const directory = new URL('../../migrations/', import.meta.url)
+  const directory = new URL('../migrations/', import.meta.url)
   for (const name of readdirSync(directory).filter((name) => name.endsWith('.sql')).sort()) {
     sqlite.exec(readFileSync(new URL(name, directory), 'utf8'))
   }

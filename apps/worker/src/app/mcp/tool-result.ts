@@ -5,7 +5,7 @@ import {
   apiErrorStatus,
   ApiError,
   isApiError,
-} from "../../../platform/http/api-error";
+} from "../../platform/http/api-error";
 
 const FORBIDDEN_OUTPUT_KEYS = new Set([
   "user_id",

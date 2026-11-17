@@ -103,7 +103,7 @@ appear as a new connection later. Revoke provider access separately when needed.
 ## Add an MCP operation
 
 1. Add its strict input schema, name, and discovery metadata to
-   `backend/apps/worker/mcp/contracts.ts`.
+   `apps/worker/src/app/mcp/contracts.ts`.
 2. Add a narrow capability in `types.ts`, wired from its owning module in the
    Worker composition root. Keep repository access out of the MCP adapter.
 3. Dispatch the operation in `server.ts` and explicitly select public output

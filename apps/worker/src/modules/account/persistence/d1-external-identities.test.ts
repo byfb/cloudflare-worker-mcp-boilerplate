@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { createTestDatabase } from '../../../tests/sqlite-d1'
+import { createTestDatabase } from '../../../../tests/sqlite-d1'
 import { ExternalIdentityCollisionError } from '../domain/external-identity'
 import { D1ExternalIdentityRepository } from './d1-external-identities'
 

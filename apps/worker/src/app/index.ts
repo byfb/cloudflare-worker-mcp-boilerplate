@@ -19,23 +19,23 @@ import {
   type ExternalIdentityRepository,
   type McpConnectionRepository,
   type McpConnectionCapability,
-} from "../../modules/account";
+} from "../modules/account";
 import {
   requireCsrf,
   requireSession,
   type AccessAssertionVerifier,
   type JwtEnv,
-} from "../../platform/auth";
-import { getDbOrApiError, type D1Database } from "../../platform/d1";
+} from "../platform/auth";
+import { getDbOrApiError, type D1Database } from "../platform/d1";
 import {
   ApiError,
   apiErrorStatus,
   isApiError,
-} from "../../platform/http/api-error";
-import { fromApiError, json } from "../../platform/http/responses";
-import { Router } from "../../platform/http/router";
-import { logRequest, type RequestLogger } from "../../platform/observability/request-log";
-import { systemClock } from "../../platform/runtime/clock";
+} from "../platform/http/api-error";
+import { fromApiError, json } from "../platform/http/responses";
+import { Router } from "../platform/http/router";
+import { logRequest, type RequestLogger } from "../platform/observability/request-log";
+import { systemClock } from "../platform/runtime/clock";
 import type { AccessWorkerEnv } from "./access-config";
 import {
   defaultWorkerAccessRuntime,

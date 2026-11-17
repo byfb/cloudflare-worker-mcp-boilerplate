@@ -1,5 +1,5 @@
 name = "app-worker-local"
-main = "apps/worker/index.ts"
+main = "src/app/index.ts"
 compatibility_date = "2026-09-01"
 compatibility_flags = ["nodejs_compat"]
 
@@ -12,4 +12,4 @@ inspector_port = 0
 binding = "DB"
 database_name = "app-db"
 database_id = "00000000-0000-0000-0000-000000000000"
-migrations_dir = "../migrations"
+migrations_dir = "migrations"

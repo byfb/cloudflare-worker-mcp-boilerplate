@@ -2,7 +2,7 @@ import { DatabaseSync } from 'node:sqlite'
 import { readFileSync, readdirSync } from 'node:fs'
 import { generateSQLiteDrizzleJson, generateSQLiteMigration } from 'drizzle-kit/api'
 import { expect, it } from 'vitest'
-import { createTestDatabase } from '../../../tests/sqlite-d1'
+import { createTestDatabase } from '../../../../tests/sqlite-d1'
 import * as schema from './schema'
 
 it('keeps the typed schema in sync with the latest migration snapshot', async () => {

@@ -1,5 +1,5 @@
-import type { McpClientInfo } from "../../../modules/account/public/mcp-connections";
-import { ApiError } from "../../../platform/http/api-error";
+import type { McpClientInfo } from "../../modules/account/public/mcp-connections";
+import { ApiError } from "../../platform/http/api-error";
 
 export const MCP_CLIENT_INFO_META_KEY = "io.modelcontextprotocol/clientInfo";
 

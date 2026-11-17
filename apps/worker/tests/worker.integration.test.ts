@@ -1,9 +1,9 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { exportJWK, generateKeyPair, SignJWT, type JWK } from 'jose'
 import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client'
-import { handleWorkerRequest, type WorkerEnv } from '../apps/worker'
-import { WorkerAccessRuntime } from '../apps/worker/access-runtime'
-import { createAccessAssertionVerifier } from '../platform/auth/access'
+import { handleWorkerRequest, type WorkerEnv } from '../src/app'
+import { WorkerAccessRuntime } from '../src/app/access-runtime'
+import { createAccessAssertionVerifier } from '../src/platform/auth/access'
 import { createTestDatabase } from './sqlite-d1'
 
 const origin = 'https://app.example.com'
@@ -164,7 +164,7 @@ describe('fresh application', () => {
     expect(prepare).not.toHaveBeenCalled()
   })
 
-  it('keeps protocol paths out of the SPA', async () => {
+  it('keeps protocol paths out of static pages', async () => {
     for (const path of ['/mcp/', '/mcp-unknown', '/.well-known/oauth-protected-resource', '/api/missing']) {
       expect((await request(path)).status).toBe(404)
     }

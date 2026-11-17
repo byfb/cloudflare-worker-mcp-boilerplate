@@ -1,7 +1,7 @@
 # D1 and Drizzle
 
 Account persistence uses the stable Drizzle ORM D1 driver. Its typed tables live
-in `backend/modules/account/persistence/schema.ts`; repositories use the query
+in `apps/worker/src/modules/account/persistence/schema.ts`; repositories use the query
 builder for selects, inserts, updates, deletes and conditional upserts. Domain
 models and application ports stay independent of the ORM.
 
@@ -13,14 +13,14 @@ connections remain blocked until explicitly enabled or forgotten.
 ## Change the schema
 
 1. Edit the owning module's `persistence/schema.ts`. New modules use the same
-   path convention; `backend/drizzle.config.ts` discovers those schema files.
+   path convention; `apps/worker/drizzle.config.ts` discovers those schema files.
 2. From the repository root, generate an ordered SQL migration and its snapshot:
 
    ```sh
    pnpm run db:generate --name add_example_field
    ```
 
-3. Review the SQL in `migrations/`, including data backfills, indexes and foreign
+3. Review the SQL in `apps/worker/migrations/`, including data backfills, indexes and foreign
    keys. SQLite table rebuilds need particular care with referenced rows and
    `ON DELETE CASCADE`; use a custom migration when the generated SQL would not
    preserve existing data.
@@ -31,7 +31,7 @@ connections remain blocked until explicitly enabled or forgotten.
    pnpm run ci
    ```
 
-5. Commit the schema, SQL, `migrations/meta` snapshots and journal together.
+5. Commit the schema, SQL, `apps/worker/migrations/meta` snapshots and journal together.
    Deployment applies the SQL through the existing Wrangler migration step.
 
 Generation needs no Cloudflare credentials. `pnpm run db:check` validates

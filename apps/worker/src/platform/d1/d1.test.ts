@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm'
 import { describe, expect, it } from 'vitest'
-import { createTestDatabase } from '../../tests/sqlite-d1'
+import { createTestDatabase } from '../../../tests/sqlite-d1'
 import {
   createDatabase, executeD1, D1Error, getDb, getDbOrApiError, stableErrorMessage, wrapD1Error,
   d1Int, d1NullableNumber, d1Values,

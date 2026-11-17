@@ -5,7 +5,7 @@ React application, and authenticated remote MCP server.
 
 ## Included
 
-- A pnpm workspace with separate backend and frontend packages.
+- A pnpm monorepo with `apps/worker` and `apps/web` workspace packages.
 - Drizzle ORM for typed D1 queries, with module-owned schemas and generated migrations.
 - Username/password accounts, Argon2id password hashes, signed session cookies,
   and CSRF protection for authenticated writes.
@@ -32,7 +32,7 @@ pnpm run dev
 ```
 
 Open **http://localhost:8787** and create an account. `setup:local` generates a random
-secret in ignored root and backend `.env` files; existing files are preserved.
+secret in ignored root and `apps/worker/.env` files; existing files are preserved.
 No Cloudflare login or remote resources are needed for local development.
 
 Local secrets use dotenv `KEY=value` syntax. Each `.env` file sits beside its
@@ -83,8 +83,8 @@ and how to add operations.
 pnpm run ci
 ```
 
-This checks template hygiene, Drizzle migration metadata, TypeScript, backend and
-frontend tests, the web build, and a non-deploying bundle using the production
+This checks template hygiene, Drizzle migration metadata, TypeScript, Worker and
+web tests, the web build, and a non-deploying bundle using the production
 Worker configuration. Schema tests compare the typed tables with migration
 snapshots and exercise constraints against SQLite.
 Integration tests use an isolated in-memory SQLite database and the actual MCP
@@ -104,11 +104,11 @@ variables, and secrets.
 
 ## Make it your project
 
-1. Rename `app-worker` and `app-db` in `wrangler.jsonc`. The backend Wrangler
+1. Rename `app-worker` and `app-db` in `wrangler.jsonc`. The Worker package’s Wrangler
    config is for local development; keep its database name aligned if you rename it.
-2. Replace the generic package names, page title, PWA manifest, and `web/public/icon.svg`.
+2. Replace the generic package names, page title, PWA manifest, and `apps/web/public/icon.svg`.
    PNG icons are generated from that SVG during the web build.
-3. Add business modules under `backend/modules`, routes in the Worker composition
+3. Add business modules under `apps/worker/src/modules`, routes in the Worker composition
    root, and typed tables in each module's `persistence/schema.ts`. Generate and
    review migrations with `pnpm run db:generate --name describe_change`, then
    apply locally with `pnpm run db:migrate`. See [database setup](docs/database.md)
@@ -133,7 +133,7 @@ pnpm exec wrangler d1 create app-db
 ```
 
 Put the returned database ID into **root `wrangler.jsonc`**. Keep the all-zero ID
-in `backend/wrangler.toml` for local development. Set a new, random production
+in `apps/worker/wrangler.toml` for local development. Set a new, random production
 secret of at least 32 bytes, apply migrations, then deploy:
 
 ```sh
@@ -153,18 +153,20 @@ appropriate for your traffic.
 ## Layout
 
 ```text
-backend/
-  apps/worker/       HTTP/MCP composition and protocol adapters
-  modules/account/  Account rules, services, persistence, and routes
-  platform/         D1, HTTP, auth, runtime, and logging
-  shared-kernel/    Dependency-free rule errors
-  dev/              Synthetic local MCP server
-  tests/            Database integration and architecture checks
-web/                React + Vite application and PWA assets
-migrations/         Ordered D1 SQL migrations and Drizzle snapshots
-infra/cloudflare/   Optional Terraform D1 and Access infrastructure
-scripts/            Local setup and template hygiene
-docs/               Architecture and Access/MCP setup
+apps/
+  worker/                  @app/worker
+    src/app/               HTTP/MCP composition and protocol adapters
+    src/modules/account/   Account rules, services, persistence, and routes
+    src/platform/          D1, HTTP, auth, runtime, and logging
+    src/shared-kernel/     Dependency-free rule errors
+    dev/                   Synthetic local MCP server
+    tests/                 Database integration and architecture checks
+    migrations/            Ordered D1 SQL and Drizzle snapshots
+  web/                     @app/web (React + Vite application and PWA assets)
+infra/cloudflare/          Optional Terraform D1 and Access infrastructure
+scripts/                   Local setup, deployment, and template hygiene
+docs/                      Architecture and Access/MCP setup
+wrangler.jsonc             Combined Worker + web deployment configuration
 ```
 
 ## License

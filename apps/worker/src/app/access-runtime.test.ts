@@ -1,7 +1,7 @@
 import type {
   AccessAssertionVerifier,
   AccessAssertionVerifierConfig,
-} from "../../platform/auth";
+} from "../platform/auth";
 import { describe, expect, it, vi } from "vitest";
 import type { AccessWorkerEnv } from "./access-config";
 import { WorkerAccessRuntime } from "./access-runtime";

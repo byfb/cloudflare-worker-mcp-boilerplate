@@ -24,10 +24,7 @@
     ]
   },
   "include": [
-    "apps",
-    "modules",
-    "platform",
-    "shared-kernel",
+    "src",
     "tests",
     "vitest.config.ts",
     "drizzle.config.ts",

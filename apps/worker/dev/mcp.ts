@@ -1,4 +1,4 @@
-import { handleMcpRequest } from '../apps/worker/mcp/server'
+import { handleMcpRequest } from '../src/app/mcp/server'
 
 /** Local protocol fixture: synthetic data, no database and no production imports of this entrypoint. */
 export default {
