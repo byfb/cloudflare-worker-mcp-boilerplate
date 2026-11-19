@@ -45,11 +45,11 @@ Managed OAuth applies the application's Access policies and exchanges the
 client's opaque OAuth token for a signed `Cf-Access-Jwt-Assertion` at the edge.
 The Worker continues to validate that assertion and resolve the linked account.
 It does not receive an IdP client secret or implement an authorization server.
-The stack enables dynamic registration and callbacks on `127.0.0.1` at any port
-so Codex CLI can receive the authorization code. The `localhost` hostname is
-opt-in. To allow only specific callbacks, set `oauth_allow_loopback = false`
-and list the intended clients' URIs in `oauth_redirect_uris`.
-[Managed OAuth](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/managed-oauth/)
+Dynamic registration allows both ChatGPT web callback forms, the published Claude
+and Cursor web callbacks, and `127.0.0.1` at any port for Codex CLI. The
+`localhost` hostname is opt-in. To allow only specific callbacks, set
+`oauth_allow_loopback = false` and supply the complete list in
+`oauth_redirect_uris`. [Default callback rules](mcp-oauth-callbacks.md) · [Managed OAuth](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/managed-oauth/)
 
 Cloudflare's current OAuth guide permits HTTP/HTTPS callbacks and explicitly
 listed native schemes. The pinned provider description still says HTTPS, while

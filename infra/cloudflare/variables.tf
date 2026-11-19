@@ -76,9 +76,15 @@ variable "create_email_identity_provider" {
 }
 
 variable "oauth_redirect_uris" {
-  type        = list(string)
-  default     = []
-  description = "Explicit Managed OAuth DCR callbacks; HTTPS and native URI schemes are supported by Access."
+  type     = list(string)
+  nullable = false
+  default = [
+    "https://chatgpt.com/connector_platform_oauth_redirect",
+    "https://chatgpt.com/connector/oauth/*",
+    "https://claude.ai/api/mcp/auth_callback",
+    "https://www.cursor.com/agents/mcp/oauth/callback",
+  ]
+  description = "Redirect URIs allowed for Managed OAuth dynamic client registration. An explicit list replaces the hosted client defaults."
   validation {
     condition     = length(var.oauth_redirect_uris) > 0 || var.oauth_allow_localhost || var.oauth_allow_loopback
     error_message = "Configure an OAuth redirect URI or allow localhost or loopback clients."

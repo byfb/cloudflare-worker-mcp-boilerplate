@@ -16,11 +16,12 @@ application. For example, serve the app at `https://app.example.com` and MCP at
 `https://app.example.com/mcp` from the same Worker.
 
 Terraform provisions the Access application, its email allow policy and
-Managed OAuth. Dynamic client registration and `127.0.0.1` callbacks are
-enabled by default. You can reuse existing identity providers or provision
-email OTP. The deployment workflow passes the generated audience and team
-domain to Wrangler. Setting a separate `MCP_HOSTNAME` provisions a second
-Access application with the same callback policy for MCP. [Terraform deployment setup](deployment.md#terraform-mode-configuration)
+Managed OAuth. Dynamic client registration accepts ChatGPT web, Claude web,
+Cursor web, and `127.0.0.1` callbacks by default. You can reuse existing
+identity providers or provision email OTP. The deployment workflow passes the
+generated audience and team domain to Wrangler. Setting a separate `MCP_HOSTNAME`
+provisions a second Access application with the same callback policy for MCP.
+[Terraform deployment setup](deployment.md#terraform-mode-configuration)
 
 For a manually managed deployment, configure the hostname and OAuth callbacks
 before connecting the client.
@@ -32,10 +33,12 @@ before connecting the client.
    settings**. Enable **Managed OAuth**, allow dynamic client registration, and
    turn on **Allow loopback clients** for Codex CLI. This covers the port Codex
    chooses on `127.0.0.1`.
-3. For a client that uses the hostname `localhost`, turn on **Allow localhost
-   clients**. For a hosted or native client, add its published callback to
-   **Allowed redirect URIs**. The MCP server URL belongs in the client's server
-   configuration. [MCP client callback list](mcp-oauth-callbacks.md) · [Cloudflare Managed OAuth settings](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/managed-oauth/#managed-oauth-settings)
+3. Under **Allowed redirect URIs**, add the entries for your hosted or native
+   clients. For ChatGPT, include both the shared callback and its
+   `https://chatgpt.com/connector/oauth/*` path. To allow only the redirect
+   assigned to a particular connection, enter its exact URL. For clients that need arbitrary
+   ports on the `localhost` hostname, turn on **Allow localhost clients**.
+   [MCP client callback list](mcp-oauth-callbacks.md) · [Cloudflare Managed OAuth settings](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/managed-oauth/#managed-oauth-settings)
 
 Add these non-secret values to root `wrangler.toml` under `[vars]`:
 
