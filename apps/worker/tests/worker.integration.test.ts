@@ -46,6 +46,11 @@ async function register(username = 'member') {
   expect(response.status).toBe(201)
   return { response, user: await response.json() as { user_id: string; username: string; csrf: string }, cookie: response.headers.get('Set-Cookie')!.split(';')[0] }
 }
+async function linkAccount({ user, cookie }: Awaited<ReturnType<typeof register>>, browserAssertion: string) {
+  const headers = { Cookie: cookie, Origin: origin, 'X-CSRF-Token': user.csrf, 'Cf-Access-Jwt-Assertion': browserAssertion }
+  expect((await request('/api/auth/access-link', { method: 'POST', headers })).status).toBe(200)
+  return headers
+}
 beforeEach(() => {
   database = createTestDatabase()
   env = { DB: database.db, JWT_SECRET: secret, APP_ORIGIN: origin,
@@ -95,26 +100,26 @@ describe('fresh application', () => {
 
   it.each([
     { name: 'shared defaults', mcpAudience: undefined, mcpOrigin: undefined },
+    { name: 'legacy initialize-only client', mcpAudience: undefined, mcpOrigin: undefined, legacy: true },
     { name: 'explicit shared settings', mcpAudience: browserAudience, mcpOrigin: origin },
     { name: 'separate audience', mcpAudience: 'mcp-audience', mcpOrigin: undefined },
     { name: 'separate origin', mcpAudience: undefined, mcpOrigin: 'https://mcp.example.com' },
     { name: 'separate audience and origin', mcpAudience: 'mcp-audience', mcpOrigin: 'https://mcp.example.com' },
-  ])('links an identity, calls MCP, and enforces disconnect with $name', async ({ mcpAudience, mcpOrigin }) => {
+  ])('links an identity, calls MCP, and enforces disconnect with $name', async ({ mcpAudience, mcpOrigin, legacy }) => {
     if (mcpAudience !== undefined) env.ACCESS_MCP_AUDIENCE = mcpAudience
     if (mcpOrigin !== undefined) env.MCP_ORIGIN = mcpOrigin
     const browserAssertion = await assertion(browserAudience)
     const mcpAssertion = await assertion(mcpAudience ?? browserAudience)
     const mcpUrl = new URL('/mcp', mcpOrigin ?? origin)
-    const { user, cookie } = await register()
+    const account = await register()
     const unlinked = await handleWorkerRequest(new Request(mcpUrl, {
       method: 'POST', headers: { Host: mcpUrl.host, 'Cf-Access-Jwt-Assertion': mcpAssertion },
     }), env, () => {}, { accessRuntime: access, mcpAudit: { record() {} } })
     expect(unlinked.status).toBe(403)
     expect(await unlinked.json()).toMatchObject({ code: 'access_identity_unlinked' })
-    const headers = { Cookie: cookie, Origin: origin, 'X-CSRF-Token': user.csrf, 'Cf-Access-Jwt-Assertion': browserAssertion }
-    const linked = await request('/api/auth/access-link', { method: 'POST', headers })
-    expect(linked.status).toBe(200)
-    const client = new Client({ name: 'test-client', version: '1.0.0' }, { versionNegotiation: { mode: 'auto' } })
+    const { user, cookie } = account
+    const headers = await linkAccount(account, browserAssertion)
+    const client = new Client({ name: 'test-client', version: '1.0.0' }, { versionNegotiation: { mode: legacy ? 'legacy' : 'auto' } })
     const transport = new StreamableHTTPClientTransport(mcpUrl, {
       fetch: async (url, init) => {
         const req = new Request(url, init)
@@ -130,17 +135,38 @@ describe('fresh application', () => {
       expect(result.isError).not.toBe(true)
       expect(result.structuredContent).toEqual({ username: 'member' })
       const clients = await (await request('/api/mcp-connections', { headers: { Cookie: cookie } })).json() as { connections: { client_key: string; tool_call_count: number }[] }
-      expect(clients.connections).toHaveLength(1)
-      expect(clients.connections[0].tool_call_count).toBe(1)
-      const key = clients.connections[0].client_key
+      expect(clients.connections).toHaveLength(legacy ? 2 : 1)
+      const key = 'test-client'
+      expect(clients.connections).toContainEqual(expect.objectContaining({
+        client_key: legacy ? 'mcp:unreported' : key, tool_call_count: 1,
+      }))
       const disconnected = await request('/api/mcp-connections', { method: 'PATCH', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify({ client_key: key, enabled: false }) })
       expect(disconnected.status).toBe(200)
-      await expect(client.listTools()).rejects.toThrow()
+      await expect(client.listTools()).rejects.toThrow(/mcp_connection_revoked/)
       const removed = await request('/api/mcp-connections', { method: 'DELETE', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify({ client_key: key }) })
       expect(removed.status).toBe(204)
     } finally { await client.close() }
     database.sqlite.prepare('DELETE FROM users WHERE id = ?').run(user.user_id)
     expect(database.sqlite.prepare('SELECT count(*) AS n FROM auth_identities').get()?.n).toBe(0)
+  })
+
+  it('lists the default tool on the 2026 protocol when the client omits its name', async () => {
+    const token = await assertion(browserAudience)
+    await linkAccount(await register(), token)
+    const response = await request('/mcp', {
+      method: 'POST',
+      headers: {
+        'Cf-Access-Jwt-Assertion': token, 'Content-Type': 'application/json',
+        Accept: 'application/json, text/event-stream', 'Mcp-Method': 'tools/list',
+        'Mcp-Protocol-Version': '2026-07-28',
+      },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: { _meta: {
+        'io.modelcontextprotocol/protocolVersion': '2026-07-28',
+        'io.modelcontextprotocol/clientCapabilities': {},
+      } } }),
+    })
+    expect(response.status).toBe(200)
+    expect(await response.json()).toMatchObject({ result: { tools: [expect.objectContaining({ name: 'exec' })] } })
   })
 
   it.each([undefined, 'mcp-audience'])('rejects invalid MCP authentication before D1 with audience override %s', async (mcpAudience) => {

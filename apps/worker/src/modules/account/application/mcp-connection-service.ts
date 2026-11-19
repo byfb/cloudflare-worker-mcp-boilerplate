@@ -33,7 +33,7 @@ export class McpConnectionApplication {
 
   async authorize(
     userId: string,
-    client: McpClientInfo,
+    client: McpClientInfo | undefined,
     activity: McpConnectionActivity,
   ): Promise<void> {
     const descriptor = normalizeMcpClientDescriptor(client)
@@ -46,7 +46,7 @@ export class McpConnectionApplication {
     if (!active) {
       throw ApiError.forbidden(
         'mcp_connection_revoked',
-        'MCP connection is disabled; re-enable it in Profile',
+        'MCP access is blocked by a disconnected application. Review Connected applications in Account.',
       )
     }
   }

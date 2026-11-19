@@ -3,9 +3,17 @@ import {
   MCP_CLIENT_NAME_MAX_BYTES,
   MCP_CLIENT_VERSION_MAX_BYTES,
   normalizeMcpClientDescriptor,
+  UNREPORTED_MCP_CLIENT,
 } from './mcp-connection'
 
 describe('MCP client-family identity', () => {
+  it('uses a stable group for omitted info and reserves its display label', () => {
+    expect(normalizeMcpClientDescriptor(undefined)).toEqual(UNREPORTED_MCP_CLIENT)
+    expect(normalizeMcpClientDescriptor({
+      name: UNREPORTED_MCP_CLIENT.clientKey.toUpperCase(), version: '1', title: 'Another app',
+    })).toEqual(UNREPORTED_MCP_CLIENT)
+  })
+
   it('normalizes a stable family key without using the changing version', () => {
     const first = normalizeMcpClientDescriptor({
       name: '  ChatGPT  ',

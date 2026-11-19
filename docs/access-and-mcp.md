@@ -76,12 +76,21 @@ it must not return an Astro document.
 
 ## Client contract
 
-This starter uses MCP SDK v2 and per-request implementation metadata:
+The Worker supports Streamable HTTP clients using the `2025-11-25` and
+`2026-07-28` protocols. A legacy client reports its name in
+`initialize.params.clientInfo`. It can then list and call tools without
+repeating its name.
+
+On the 2026 protocol, send the protocol version and client capabilities with
+each request. Include the optional `clientInfo` to identify the client in
+**Account → Connected applications**. [MCP per-request fields](https://modelcontextprotocol.io/specification/2026-07-28/basic#_meta)
 
 ```json
 {
   "params": {
     "_meta": {
+      "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+      "io.modelcontextprotocol/clientCapabilities": {},
       "io.modelcontextprotocol/clientInfo": {
         "name": "example-client",
         "version": "1.0.0"
@@ -91,14 +100,13 @@ This starter uses MCP SDK v2 and per-request implementation metadata:
 }
 ```
 
-The v2 client used by the integration tests supplies this metadata. Clients that
-only report their name during legacy initialization are rejected. Verify your
-intended client's protocol support before depending on hosted authentication.
-
-Connection controls are keyed by a self-reported normalized client name. A
-disconnect blocks that name for the account; it is not OAuth grant revocation.
-Forgetting a disconnected connection deletes that local record and allows it to
-appear as a new connection later. Revoke provider access separately when needed.
+Each authenticated request is stateless. Requests with a name use the account's
+entry for that client. Requests without one share **MCP clients without a name**.
+Disconnecting any entry also blocks unnamed requests for that account because
+the Worker cannot tell which client sent them. Other named clients can continue
+to use their active entries. Reconnect or forget the disconnected entries to
+allow unnamed requests again. Forgetting an entry deletes the local record.
+Manage OAuth grants separately in the provider.
 
 ## Add an MCP operation
 

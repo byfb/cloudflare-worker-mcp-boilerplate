@@ -99,7 +99,7 @@ describe('McpConnectionApplication', () => {
     }, { toolCall: false })).rejects.toMatchObject({
       status: 403,
       code: 'mcp_connection_revoked',
-      message: 'MCP connection is disabled; re-enable it in Profile',
+      message: 'MCP access is blocked by a disconnected application. Review Connected applications in Account.',
     })
   })
 

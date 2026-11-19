@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createTestDatabase } from '../../../../tests/sqlite-d1'
+import { UNREPORTED_MCP_CLIENT } from '../domain/mcp-connection'
 import { D1McpConnectionRepository } from './d1-mcp-connections'
 
 const authorization = {
@@ -67,6 +68,30 @@ describe('D1McpConnectionRepository with Drizzle', () => {
     await expect(repository.removeDisabled('user-a', 'chatgpt')).resolves.toBe('missing')
     await expect(repository.authorize({ ...authorization, nowMs: 3_000 })).resolves.toBe(true)
     await expect(repository.listByUser('user-a')).resolves.toMatchObject([{ firstSeenAt: 3_000 }])
+  })
+
+  it('honors account disconnects before inserting or refreshing an unnamed connection', async () => {
+    const unnamed = { ...authorization, ...UNREPORTED_MCP_CLIENT, toolCall: true }
+    await repository.authorize(authorization)
+    await repository.setEnabled('user-a', 'chatgpt', false, 2_000)
+    expect(await repository.authorize(unnamed)).toBe(false)
+    expect(await repository.listByUser('user-a')).toHaveLength(1)
+    expect(await repository.authorize({ ...unnamed, userId: 'user-b' })).toBe(true)
+    expect(await repository.authorize({ ...authorization, clientKey: 'other-client' })).toBe(true)
+
+    await repository.setEnabled('user-a', 'chatgpt', true, 3_000)
+    expect(await repository.authorize({ ...unnamed, nowMs: 4_000 })).toBe(true)
+    await repository.setEnabled('user-a', 'chatgpt', false, 5_000)
+    expect(await repository.authorize({ ...unnamed, nowMs: 6_000 })).toBe(false)
+    const rows = await repository.listByUser('user-a')
+    expect(rows.find(row => row.clientKey === unnamed.clientKey)).toMatchObject({
+      lastSeenAt: 4_000, toolCallCount: 1, revokedAt: null,
+    })
+
+    await repository.removeDisabled('user-a', 'chatgpt')
+    expect(await repository.authorize(unnamed)).toBe(true)
+    await repository.setEnabled('user-a', unnamed.clientKey, false, 7_000)
+    expect(await repository.authorize(unnamed)).toBe(false)
   })
 
   it('retries when a row is disabled between the conditional delete and lookup', async () => {
