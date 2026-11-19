@@ -54,6 +54,11 @@ requests to the local Worker. Use `localhost` because the session cookie is `Sec
 Both development modes and migrations share `.wrangler/state` in the repo root.
 The PWA service worker is built for the production preview, not the Astro dev server.
 
+Open `/llms.txt` for a task-based index of the boilerplate guides. To publish a
+guide, add its Markdown file under `docs/` and link to its site path in
+[the index](apps/web/public/llms.txt). The web build serves each linked guide
+at the same path, including nested directories.
+
 ## Connect to hosted MCP with Managed OAuth
 
 In Terraform mode, the deployment workflow provisions the D1 `DB` binding,
