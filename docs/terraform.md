@@ -45,8 +45,10 @@ Managed OAuth applies the application's Access policies and exchanges the
 client's opaque OAuth token for a signed `Cf-Access-Jwt-Assertion` at the edge.
 The Worker continues to validate that assertion and resolve the linked account.
 It does not receive an IdP client secret or implement an authorization server.
-Configure callback URIs for the intended clients and leave blanket localhost and
-loopback allowance off unless needed.
+The stack enables dynamic registration and callbacks on `127.0.0.1` at any port
+so Codex CLI can receive the authorization code. The `localhost` hostname is
+opt-in. To allow only specific callbacks, set `oauth_allow_loopback = false`
+and list the intended clients' URIs in `oauth_redirect_uris`.
 [Managed OAuth](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/managed-oauth/)
 
 Cloudflare's current OAuth guide permits HTTP/HTTPS callbacks and explicitly
@@ -125,8 +127,8 @@ Bootstrap once per account or deployment target:
 1. An active Cloudflare account, DNS zone, and Zero Trust organization.
 2. The private state bucket, its object credentials, and a state backup process.
 3. Existing IdP IDs, or explicit permission to create the OTP provider.
-4. GitHub environment variables/secrets, including a stable Worker JWT secret
-   and permitted OAuth callbacks.
+4. GitHub environment variables and secrets, including a stable Worker JWT
+   secret and any additional client callback URIs.
 5. Required reviewers on the `production-infrastructure` GitHub environment.
 
 Scope the Cloudflare API token to the target account and zone. Terraform needs

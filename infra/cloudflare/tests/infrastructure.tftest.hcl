@@ -18,10 +18,7 @@ variables {
   mcp_hostname                   = ""
   allowed_emails                 = ["owner@example.com"]
   identity_provider_ids          = ["11111111-1111-1111-1111-111111111111"]
-  oauth_redirect_uris            = ["https://client.example.com/oauth/callback"]
   create_email_identity_provider = false
-  oauth_allow_localhost          = false
-  oauth_allow_loopback           = false
 }
 
 run "shared_application" {
@@ -44,8 +41,13 @@ run "shared_application" {
     error_message = "Only the configured users may match the allow policy."
   }
   assert {
-    condition     = cloudflare_zero_trust_access_application.app.oauth_configuration.enabled && !cloudflare_zero_trust_access_application.app.oauth_configuration.dynamic_client_registration.allow_any_on_localhost && !cloudflare_zero_trust_access_application.app.oauth_configuration.dynamic_client_registration.allow_any_on_loopback
-    error_message = "Managed OAuth must be enabled without implicitly allowing local callbacks."
+    condition = (
+      cloudflare_zero_trust_access_application.app.oauth_configuration.enabled &&
+      cloudflare_zero_trust_access_application.app.oauth_configuration.dynamic_client_registration.enabled &&
+      cloudflare_zero_trust_access_application.app.oauth_configuration.dynamic_client_registration.allow_any_on_loopback &&
+      !cloudflare_zero_trust_access_application.app.oauth_configuration.dynamic_client_registration.allow_any_on_localhost
+    )
+    error_message = "The shared app must support Codex loopback callbacks with Managed OAuth and DCR by default."
   }
   assert {
     condition     = cloudflare_zero_trust_access_application.app.domain == "app.example.com" && cloudflare_zero_trust_access_application.app.policies[0].id == cloudflare_zero_trust_access_policy.users.id
@@ -92,9 +94,24 @@ run "reject_ambiguous_identity_provider" {
   expect_failures = [var.identity_provider_ids]
 }
 
+run "explicit_remote_callback_only" {
+  command = plan
+  variables {
+    oauth_allow_loopback = false
+    oauth_redirect_uris  = ["https://client.example.com/oauth/callback"]
+  }
+  assert {
+    condition = (
+      !cloudflare_zero_trust_access_application.app.oauth_configuration.dynamic_client_registration.allow_any_on_loopback &&
+      contains(cloudflare_zero_trust_access_application.app.oauth_configuration.dynamic_client_registration.allowed_uris, "https://client.example.com/oauth/callback")
+    )
+    error_message = "A deployment can restrict registration to its configured client callback."
+  }
+}
+
 run "reject_unusable_oauth" {
   command = plan
-  variables { oauth_redirect_uris = [] }
+  variables { oauth_allow_loopback = false }
   expect_failures = [var.oauth_redirect_uris]
 }
 
@@ -116,7 +133,13 @@ run "separate_mcp_application" {
     error_message = "A separate MCP hostname must receive its own Access application and audience."
   }
   assert {
-    condition     = cloudflare_zero_trust_access_application.mcp[0].oauth_configuration.enabled && !cloudflare_zero_trust_access_application.app.oauth_configuration.enabled && cloudflare_zero_trust_access_application.mcp[0].policies[0].id == cloudflare_zero_trust_access_policy.users.id
+    condition = (
+      cloudflare_zero_trust_access_application.mcp[0].oauth_configuration.enabled &&
+      cloudflare_zero_trust_access_application.mcp[0].oauth_configuration.dynamic_client_registration.enabled &&
+      cloudflare_zero_trust_access_application.mcp[0].oauth_configuration.dynamic_client_registration.allow_any_on_loopback &&
+      !cloudflare_zero_trust_access_application.app.oauth_configuration.enabled &&
+      cloudflare_zero_trust_access_application.mcp[0].policies[0].id == cloudflare_zero_trust_access_policy.users.id
+    )
     error_message = "The MCP app must own Managed OAuth and enforce the configured allow policy."
   }
 }
