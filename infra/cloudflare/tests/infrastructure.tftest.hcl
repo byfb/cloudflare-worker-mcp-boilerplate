@@ -50,6 +50,15 @@ run "shared_application" {
     error_message = "The shared app must support Codex loopback callbacks with Managed OAuth and DCR by default."
   }
   assert {
+    condition = toset(cloudflare_zero_trust_access_application.app.oauth_configuration.dynamic_client_registration.allowed_uris) == toset([
+      "https://chatgpt.com/connector_platform_oauth_redirect",
+      "https://chatgpt.com/connector/oauth/*",
+      "https://claude.ai/api/mcp/auth_callback",
+      "https://www.cursor.com/agents/mcp/oauth/callback",
+    ])
+    error_message = "The default allowlist must cover both ChatGPT callback forms and the published Claude and Cursor web callbacks."
+  }
+  assert {
     condition     = cloudflare_zero_trust_access_application.app.domain == "app.example.com" && cloudflare_zero_trust_access_application.app.policies[0].id == cloudflare_zero_trust_access_policy.users.id
     error_message = "The allow policy must protect the entire hostname, including OAuth discovery."
   }
@@ -98,20 +107,35 @@ run "explicit_remote_callback_only" {
   command = plan
   variables {
     oauth_allow_loopback = false
-    oauth_redirect_uris  = ["https://client.example.com/oauth/callback"]
+    oauth_redirect_uris  = ["https://chatgpt.com/connector/oauth/example-id"]
   }
   assert {
     condition = (
       !cloudflare_zero_trust_access_application.app.oauth_configuration.dynamic_client_registration.allow_any_on_loopback &&
-      contains(cloudflare_zero_trust_access_application.app.oauth_configuration.dynamic_client_registration.allowed_uris, "https://client.example.com/oauth/callback")
+      toset(cloudflare_zero_trust_access_application.app.oauth_configuration.dynamic_client_registration.allowed_uris) == toset(["https://chatgpt.com/connector/oauth/example-id"])
     )
     error_message = "A deployment can restrict registration to its configured client callback."
   }
 }
 
+run "loopback_clients_only" {
+  command = plan
+  variables { oauth_redirect_uris = [] }
+  assert {
+    condition = (
+      length(cloudflare_zero_trust_access_application.app.oauth_configuration.dynamic_client_registration.allowed_uris) == 0 &&
+      cloudflare_zero_trust_access_application.app.oauth_configuration.dynamic_client_registration.allow_any_on_loopback
+    )
+    error_message = "An explicit empty allowlist must disable hosted callbacks and preserve the loopback option."
+  }
+}
+
 run "reject_unusable_oauth" {
   command = plan
-  variables { oauth_allow_loopback = false }
+  variables {
+    oauth_allow_loopback = false
+    oauth_redirect_uris  = []
+  }
   expect_failures = [var.oauth_redirect_uris]
 }
 
@@ -123,7 +147,10 @@ run "reject_path_scoped_access" {
 
 run "separate_mcp_application" {
   command = apply
-  variables { mcp_hostname = "mcp.example.com" }
+  variables {
+    mcp_hostname        = "mcp.example.com"
+    oauth_redirect_uris = null # GitHub Actions uses the Terraform defaults when its variable is unset.
+  }
   override_resource {
     target = cloudflare_zero_trust_access_application.mcp[0]
     values = { aud = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" }
@@ -137,6 +164,7 @@ run "separate_mcp_application" {
       cloudflare_zero_trust_access_application.mcp[0].oauth_configuration.enabled &&
       cloudflare_zero_trust_access_application.mcp[0].oauth_configuration.dynamic_client_registration.enabled &&
       cloudflare_zero_trust_access_application.mcp[0].oauth_configuration.dynamic_client_registration.allow_any_on_loopback &&
+      contains(cloudflare_zero_trust_access_application.mcp[0].oauth_configuration.dynamic_client_registration.allowed_uris, "https://chatgpt.com/connector/oauth/*") &&
       !cloudflare_zero_trust_access_application.app.oauth_configuration.enabled &&
       cloudflare_zero_trust_access_application.mcp[0].policies[0].id == cloudflare_zero_trust_access_policy.users.id
     )

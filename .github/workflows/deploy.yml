@@ -91,7 +91,7 @@ jobs:
           TF_VAR_allowed_emails: ${{ vars.ACCESS_ALLOWED_EMAILS }}
           TF_VAR_identity_provider_ids: ${{ vars.ACCESS_IDENTITY_PROVIDER_IDS || '[]' }}
           TF_VAR_create_email_identity_provider: ${{ vars.ACCESS_CREATE_EMAIL_IDP || 'false' }}
-          TF_VAR_oauth_redirect_uris: ${{ vars.OAUTH_REDIRECT_URIS || '[]' }}
+          TF_VAR_oauth_redirect_uris: ${{ vars.OAUTH_REDIRECT_URIS || 'null' }}
           TF_VAR_oauth_allow_localhost: ${{ vars.OAUTH_ALLOW_LOCALHOST || 'false' }}
           TF_VAR_oauth_allow_loopback: ${{ vars.OAUTH_ALLOW_LOOPBACK || 'true' }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
