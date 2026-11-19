@@ -58,10 +58,11 @@ The PWA service worker is built for the production preview, not the Astro dev se
 
 In Terraform mode, the deployment workflow provisions the D1 `DB` binding,
 applies migrations, and enables Managed OAuth on the Access application for
-the MCP hostname. Dynamic client registration allows callbacks on `127.0.0.1`
-at any port, including the one Codex CLI chooses. If you manage Access manually, enable
-**Managed OAuth**, dynamic client registration, and **Allow loopback clients**
-on that application. [Deployment setup](docs/deployment.md#terraform-mode-configuration) · [Manual Access setup](docs/access-and-mcp.md#hosted-configuration)
+the MCP hostname. The default redirect rules cover ChatGPT web, Claude web,
+Cursor web, and Codex CLI on `127.0.0.1` at its chosen port. If you manage
+Access manually, enable **Managed OAuth** and dynamic client registration on
+that application, add the hosted callback rules, and turn on **Allow loopback
+clients** for Codex. [Hosted callback rules](docs/mcp-oauth-callbacks.md) · [Manual Access setup](docs/access-and-mcp.md#hosted-configuration)
 
 1. Open the deployed web app through Access and create or sign in to your app
    account. Under **Account**, select **Link current Access identity** once.
@@ -80,14 +81,18 @@ Browser and MCP share a hostname and Access audience by default. If you set
 
 ### Connect from ChatGPT web
 
-1. In your deployed app, select **Account → Link current Access identity**. In
-   ChatGPT, open **Plugins → + → Add custom MCP server**, enter your deployed
-   `/mcp` URL, and choose **OAuth** with dynamic client registration. [ChatGPT plugin setup](https://developers.openai.com/api/docs/guides/custom-mcp-server#how-to-use)
-2. Copy the exact redirect URI shown for this connection on its MCP server
-   management page. Allow it in Cloudflare Access or apply it through the
-   deployment workflow's `OAUTH_REDIRECT_URIS` variable. [Callback list and configuration examples](docs/mcp-oauth-callbacks.md)
-3. Finish creating the plugin, install it, and sign in through Access. Ask ChatGPT to run
-   `call get_user_profile {}` with the plugin's `exec` tool.
+1. In your deployed app, select **Account → Link current Access identity**.
+2. In ChatGPT, open **Plugins → + → Add custom MCP server**, enter your deployed
+   `/mcp` URL, and choose **OAuth** with dynamic client registration. The
+   Terraform defaults cover both the shared redirect and the URL ChatGPT assigns
+   to an individual connection. [ChatGPT plugin setup](https://developers.openai.com/api/docs/guides/custom-mcp-server#how-to-use)
+3. Install the plugin, sign in through Access, and ask ChatGPT to run
+   `call get_user_profile {}` with its `exec` tool.
+
+If an existing deployment reports `Redirect URI not allowed by application configuration`,
+add `https://chatgpt.com/connector/oauth/*` to its custom allowlist or allow
+the exact redirect URI shown for that plugin. Apply the change and retry the
+same connection. [Callback setup and troubleshooting](docs/mcp-oauth-callbacks.md#when-chatgpt-reports-a-rejected-redirect)
 
 ## Try MCP locally without provisioning Access
 

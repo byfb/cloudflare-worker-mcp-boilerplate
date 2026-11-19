@@ -12,9 +12,9 @@ identity_provider_ids = ["00000000-0000-0000-0000-000000000000"]
 # identity_provider_ids          = []
 # create_email_identity_provider = true
 
-# Codex CLI uses 127.0.0.1 with a dynamic port, allowed by default.
-# For other clients, configure their registered callback or enable localhost.
-# See docs/mcp-oauth-callbacks.md for the redirect URIs used by hosted clients.
+# Omit oauth_redirect_uris for ChatGPT (shared and per-connection), Claude and Cursor web.
+# An explicit list replaces those defaults. See docs/mcp-oauth-callbacks.md.
 # oauth_redirect_uris   = ["https://client.example.com/oauth/callback"]
+# Codex CLI uses 127.0.0.1 at any port by default. The localhost hostname is opt-in.
 # oauth_allow_localhost = true
 # oauth_allow_loopback  = false
