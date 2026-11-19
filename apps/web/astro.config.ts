@@ -34,7 +34,11 @@ export default defineConfig({
       cleanupOutdatedCaches: true,
       // Each precached page serves its own clean URL; only unknown routes fall back.
       navigateFallback: '/404',
-      navigateFallbackDenylist: edgeNavigationDenylist,
+      navigateFallbackDenylist: [
+        ...edgeNavigationDenylist,
+        /^\/llms\.txt(?:\?|$)/,
+        /^\/docs\/.+\.md(?:\?|$)/,
+      ],
       runtimeCaching: [{
         urlPattern: /^https?:\/\/[^/]+\/(?:api(?:[/?#]|$)|mcp|\.well-known(?:[/?#]|$)|cdn-cgi(?:[/?#]|$))/,
         handler: 'NetworkOnly',

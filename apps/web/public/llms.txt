@@ -1,0 +1,15 @@
+# Cloudflare Worker + MCP boilerplate
+
+> A TypeScript starter with a static Astro web app, a Cloudflare D1 database, and a Worker that serves the account API and an authenticated Model Context Protocol (MCP) endpoint.
+
+## Development
+
+- [Choose the owning module for a feature or place a new Astro page](/docs/architecture.md)
+- [Change a D1 schema and generate a Drizzle migration](/docs/database.md)
+- [Link an account, connect an MCP client, or add a tool operation](/docs/access-and-mcp.md)
+
+## Deployment
+
+- [Configure GitHub Actions to deploy the Worker and web assets](/docs/deployment.md)
+- [Provision D1 and Cloudflare Access or configure Terraform state in R2](/docs/terraform.md)
+- [Find an MCP client's OAuth callback or troubleshoot a rejected redirect](/docs/mcp-oauth-callbacks.md)
