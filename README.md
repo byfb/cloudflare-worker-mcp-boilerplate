@@ -76,9 +76,18 @@ on that application. [Deployment setup](docs/deployment.md#terraform-mode-config
    `{"command":"call get_user_profile {}"}`. It returns your app username.
 
 Browser and MCP share a hostname and Access audience by default. If you set
-`MCP_ORIGIN`, use `<MCP_ORIGIN>/mcp` as the server URL. For a hosted client,
-add its published OAuth callback to the Access application's **Allowed redirect
-URIs**. [Access and MCP settings](docs/access-and-mcp.md#hosted-configuration)
+`MCP_ORIGIN`, use `<MCP_ORIGIN>/mcp` as the server URL.
+
+### Connect from ChatGPT web
+
+1. In your deployed app, select **Account → Link current Access identity**. In
+   ChatGPT, open **Plugins → + → Add custom MCP server**, enter your deployed
+   `/mcp` URL, and choose **OAuth** with dynamic client registration. [ChatGPT plugin setup](https://developers.openai.com/api/docs/guides/custom-mcp-server#how-to-use)
+2. Copy the exact redirect URI shown for this connection on its MCP server
+   management page. Allow it in Cloudflare Access or apply it through the
+   deployment workflow's `OAUTH_REDIRECT_URIS` variable. [Callback list and configuration examples](docs/mcp-oauth-callbacks.md)
+3. Finish creating the plugin, install it, and sign in through Access. Ask ChatGPT to run
+   `call get_user_profile {}` with the plugin's `exec` tool.
 
 ## Try MCP locally without provisioning Access
 

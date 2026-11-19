@@ -14,6 +14,7 @@ identity_provider_ids = ["00000000-0000-0000-0000-000000000000"]
 
 # Codex CLI uses 127.0.0.1 with a dynamic port, allowed by default.
 # For other clients, configure their registered callback or enable localhost.
+# See docs/mcp-oauth-callbacks.md for the redirect URIs used by hosted clients.
 # oauth_redirect_uris   = ["https://client.example.com/oauth/callback"]
 # oauth_allow_localhost = true
 # oauth_allow_loopback  = false

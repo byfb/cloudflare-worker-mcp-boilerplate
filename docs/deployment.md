@@ -148,7 +148,7 @@ and never to Terraform. The deployment token is not a Worker runtime secret.
 | `ACCESS_ALLOWED_EMAILS` | Yes | JSON array of explicit email addresses, for example `["owner@example.com"]` |
 | `ACCESS_IDENTITY_PROVIDER_IDS` | Usually | JSON array of existing account IdP IDs |
 | `ACCESS_CREATE_EMAIL_IDP` | No | Set to `true` to manage an email OTP provider instead of supplying existing IdP IDs; default `false` |
-| `OAUTH_REDIRECT_URIS` | No | Additional client callback URIs as a JSON array, e.g. `["https://client.example.com/oauth/callback"]`. Defaults to `[]` |
+| `OAUTH_REDIRECT_URIS` | No | Additional client callback URIs as a JSON array. Defaults to `[]`. [Provider URIs and copyable examples](mcp-oauth-callbacks.md) |
 | `OAUTH_ALLOW_LOCALHOST` | No | Permit callbacks on the hostname `localhost`. Defaults to `false` |
 | `OAUTH_ALLOW_LOOPBACK` | No | Permit callbacks on `127.0.0.1` at any port for clients such as Codex CLI. Defaults to `true` |
 

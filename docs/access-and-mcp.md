@@ -35,7 +35,7 @@ before connecting the client.
 3. For a client that uses the hostname `localhost`, turn on **Allow localhost
    clients**. For a hosted or native client, add its published callback to
    **Allowed redirect URIs**. The MCP server URL belongs in the client's server
-   configuration. [Cloudflare Managed OAuth settings](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/managed-oauth/#managed-oauth-settings)
+   configuration. [MCP client callback list](mcp-oauth-callbacks.md) · [Cloudflare Managed OAuth settings](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/managed-oauth/#managed-oauth-settings)
 
 Add these non-secret values to root `wrangler.toml` under `[vars]`:
 
