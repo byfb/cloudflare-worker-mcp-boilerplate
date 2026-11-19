@@ -16,14 +16,18 @@ function identityRequired(): never {
   );
 }
 
-/**
- * Read MCP 2026 per-request implementation metadata without accepting legacy
- * initialize-only identity or caller-defined query/header substitutes.
- */
-export function mcpClientInfoFromRequestBody(body: unknown): McpClientInfo {
-  const params = record(record(body)?.params);
+/** Read optional per-request metadata or the clientInfo from a legacy handshake. */
+export function mcpClientInfoFromRequestBody(body: unknown): McpClientInfo | undefined {
+  const message = record(body);
+  if (typeof message?.method !== "string") return identityRequired();
+  const params = record(message.params);
+  if (message.params !== undefined && params === undefined) return identityRequired();
   const meta = record(params?._meta);
-  const clientInfo = record(meta?.[MCP_CLIENT_INFO_META_KEY]);
+  if (params?._meta !== undefined && meta === undefined) return identityRequired();
+
+  const reported = meta?.[MCP_CLIENT_INFO_META_KEY];
+  if (reported === undefined && message.method !== "initialize") return undefined;
+  const clientInfo = record(reported === undefined ? params?.clientInfo : reported);
   if (
     clientInfo === undefined ||
     typeof clientInfo.name !== "string" ||

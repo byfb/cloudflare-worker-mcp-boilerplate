@@ -58,7 +58,7 @@ export interface McpRequestDependencies {
   readonly capabilities: McpCapabilities;
   /** Account-owned cooperative connection gate, evaluated before MCP work. */
   readonly authorizeConnection: (
-    client: McpClientInfo,
+    client: McpClientInfo | undefined,
     activity: McpConnectionActivity,
   ) => Promise<void>;
   readonly transport: McpTransportPolicy;

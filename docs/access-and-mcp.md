@@ -15,18 +15,27 @@ By default, the browser app and MCP share one hostname and one Cloudflare Access
 application. For example, serve the app at `https://app.example.com` and MCP at
 `https://app.example.com/mcp` from the same Worker.
 
-The optional [Terraform deployment mode](deployment.md#terraform-mode-configuration)
-provisions this Access application, its email allow policy and Managed OAuth,
-then injects the generated audience and team domain into Wrangler. It can also
-manage an email OTP provider or use existing IdPs. A separate `MCP_HOSTNAME`
-creates a second application and supplies the optional runtime overrides below.
-Follow the remaining manual setup only when provisioning infrastructure yourself.
+Terraform provisions the Access application, its email allow policy and
+Managed OAuth. Dynamic client registration and `127.0.0.1` callbacks are
+enabled by default. You can reuse existing identity providers or provision
+email OTP. The deployment workflow passes the generated audience and team
+domain to Wrangler. Setting a separate `MCP_HOSTNAME` provisions a second
+Access application with the same callback policy for MCP. [Terraform deployment setup](deployment.md#terraform-mode-configuration)
 
-Add your hostname as a custom-domain route in root `wrangler.toml`. Configure one
-self-hosted Access application covering the **entire hostname**, enable Managed
-OAuth for MCP clients, and choose your identity provider and allow policies.
-Consult Cloudflare's [Managed OAuth guide](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/managed-oauth/)
-for current Access configuration and client callback requirements.
+For a manually managed deployment, configure the hostname and OAuth callbacks
+before connecting the client.
+
+1. Attach the custom domain to the Worker in root `wrangler.toml`. In Zero Trust,
+   configure a self-hosted Access application covering the **entire MCP hostname**,
+   including `/.well-known/`. Choose the identity providers and policies for that app.
+2. Under **Access controls → Applications**, edit the application's **Advanced
+   settings**. Enable **Managed OAuth**, allow dynamic client registration, and
+   turn on **Allow loopback clients** for Codex CLI. This covers the port Codex
+   chooses on `127.0.0.1`.
+3. For a client that uses the hostname `localhost`, turn on **Allow localhost
+   clients**. For a hosted or native client, add its published callback to
+   **Allowed redirect URIs**. The MCP server URL belongs in the client's server
+   configuration. [MCP client callback list](mcp-oauth-callbacks.md) · [Cloudflare Managed OAuth settings](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/managed-oauth/#managed-oauth-settings)
 
 Add these non-secret values to root `wrangler.toml` under `[vars]`:
 
@@ -76,12 +85,21 @@ it must not return an Astro document.
 
 ## Client contract
 
-This starter uses MCP SDK v2 and per-request implementation metadata:
+The Worker supports Streamable HTTP clients using the `2025-11-25` and
+`2026-07-28` protocols. A legacy client reports its name in
+`initialize.params.clientInfo`. It can then list and call tools without
+repeating its name.
+
+On the 2026 protocol, send the protocol version and client capabilities with
+each request. Include the optional `clientInfo` to identify the client in
+**Account → Connected applications**. [MCP per-request fields](https://modelcontextprotocol.io/specification/2026-07-28/basic#_meta)
 
 ```json
 {
   "params": {
     "_meta": {
+      "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+      "io.modelcontextprotocol/clientCapabilities": {},
       "io.modelcontextprotocol/clientInfo": {
         "name": "example-client",
         "version": "1.0.0"
@@ -91,14 +109,13 @@ This starter uses MCP SDK v2 and per-request implementation metadata:
 }
 ```
 
-The v2 client used by the integration tests supplies this metadata. Clients that
-only report their name during legacy initialization are rejected. Verify your
-intended client's protocol support before depending on hosted authentication.
-
-Connection controls are keyed by a self-reported normalized client name. A
-disconnect blocks that name for the account; it is not OAuth grant revocation.
-Forgetting a disconnected connection deletes that local record and allows it to
-appear as a new connection later. Revoke provider access separately when needed.
+Each authenticated request is stateless. Requests with a name use the account's
+entry for that client. Requests without one share **MCP clients without a name**.
+Disconnecting any entry also blocks unnamed requests for that account because
+the Worker cannot tell which client sent them. Other named clients can continue
+to use their active entries. Reconnect or forget the disconnected entries to
+allow unnamed requests again. Forgetting an entry deletes the local record.
+Manage OAuth grants separately in the provider.
 
 ## Add an MCP operation
 

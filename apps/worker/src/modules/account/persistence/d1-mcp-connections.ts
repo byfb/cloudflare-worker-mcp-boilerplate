@@ -1,8 +1,8 @@
-import { and, asc, desc, eq, isNotNull, isNull, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, isNotNull, isNull, notExists, sql } from 'drizzle-orm'
 import { createDatabase, d1ApiError, executeD1, type Database, type D1Database } from '../../../platform/d1'
 import type { McpConnectionAuthorization, McpConnectionRepository } from '../application/mcp-connection-repository'
-import type { McpConnectionRecord } from '../domain/mcp-connection'
-import { mcpConnections } from './schema'
+import { UNREPORTED_MCP_CLIENT, type McpConnectionRecord } from '../domain/mcp-connection'
+import { mcpConnections, users } from './schema'
 
 function connectionKey(userId: string, clientKey: string) {
   return and(eq(mcpConnections.userId, userId), eq(mcpConnections.clientKey, clientKey))
@@ -15,15 +15,28 @@ export class D1McpConnectionRepository implements McpConnectionRepository {
 
   async authorize(input: McpConnectionAuthorization): Promise<boolean> {
     const increment = input.toolCall ? 1 : 0
-    const row = await executeD1('run', () => this.db.insert(mcpConnections).values({
-      userId: input.userId,
-      clientKey: input.clientKey,
-      displayName: input.displayName,
-      clientVersion: input.clientVersion,
-      firstSeenAt: input.nowMs,
-      lastSeenAt: input.nowMs,
-      toolCallCount: increment,
-    }).onConflictDoUpdate({
+    const values = {
+      userId: sql<string>`${input.userId}`,
+      clientKey: sql<string>`${input.clientKey}`,
+      displayName: sql<string>`${input.displayName}`,
+      clientVersion: sql<string>`${input.clientVersion}`,
+      firstSeenAt: sql<number>`${input.nowMs}`,
+      lastSeenAt: sql<number>`${input.nowMs}`,
+      revokedAt: sql<null>`null`,
+      toolCallCount: sql<number>`${increment}`,
+    }
+    const insert = this.db.insert(mcpConnections)
+    let write = insert.values(values)
+    if (input.clientKey === UNREPORTED_MCP_CLIENT.clientKey) {
+      // The caller could be any disconnected client for this user. Gate both
+      // first use and later updates in the same statement that records activity.
+      const disconnected = this.db.select({ key: mcpConnections.clientKey }).from(mcpConnections)
+        .where(and(eq(mcpConnections.userId, input.userId), isNotNull(mcpConnections.revokedAt)))
+      const eligible = this.db.select(values).from(users)
+        .where(and(eq(users.id, input.userId), notExists(disconnected)))
+      write = insert.select(eligible.getSQL())
+    }
+    const row = await executeD1('run', () => write.onConflictDoUpdate({
       target: [mcpConnections.userId, mcpConnections.clientKey],
       set: {
         displayName: input.displayName,

@@ -81,7 +81,7 @@ variable "oauth_redirect_uris" {
   description = "Explicit Managed OAuth DCR callbacks; HTTPS and native URI schemes are supported by Access."
   validation {
     condition     = length(var.oauth_redirect_uris) > 0 || var.oauth_allow_localhost || var.oauth_allow_loopback
-    error_message = "Configure OAuth redirect URIs or explicitly allow localhost/loopback clients."
+    error_message = "Configure an OAuth redirect URI or allow localhost or loopback clients."
   }
   validation {
     condition     = alltrue([for uri in var.oauth_redirect_uris : can(regex("^[a-z][a-z0-9+.-]*:[^\\s#]+$", uri))])
@@ -97,6 +97,6 @@ variable "oauth_allow_localhost" {
 
 variable "oauth_allow_loopback" {
   type        = bool
-  default     = false
-  description = "Allow any DCR callback on 127.0.0.1. Enable only for clients that need it."
+  default     = true
+  description = "Allow DCR callbacks on 127.0.0.1 at any port, as used by Codex CLI."
 }

@@ -13,7 +13,7 @@ export type RemoveMcpConnectionResult = 'removed' | 'active' | 'missing'
 
 /** Account-owned persistence boundary for cooperative MCP client families. */
 export interface McpConnectionRepository {
-  /** Insert/refresh an active row; return false without mutation for a tombstone. */
+  /** Record an active connection. Unnamed requests require all of the user's connections to be active. */
   authorize(input: McpConnectionAuthorization): Promise<boolean>
   listByUser(userId: string): Promise<readonly McpConnectionRecord[]>
   setEnabled(

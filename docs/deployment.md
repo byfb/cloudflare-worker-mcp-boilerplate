@@ -148,9 +148,9 @@ and never to Terraform. The deployment token is not a Worker runtime secret.
 | `ACCESS_ALLOWED_EMAILS` | Yes | JSON array of explicit email addresses, for example `["owner@example.com"]` |
 | `ACCESS_IDENTITY_PROVIDER_IDS` | Usually | JSON array of existing account IdP IDs |
 | `ACCESS_CREATE_EMAIL_IDP` | No | Set to `true` to manage an email OTP provider instead of supplying existing IdP IDs; default `false` |
-| `OAUTH_REDIRECT_URIS` | Usually | JSON array of callbacks registered by the intended MCP clients, for example `["https://client.example.com/oauth/callback"]` |
-| `OAUTH_ALLOW_LOCALHOST` | No | Explicitly permit any localhost callback; default `false` |
-| `OAUTH_ALLOW_LOOPBACK` | No | Explicitly permit any `127.0.0.1` callback; default `false` |
+| `OAUTH_REDIRECT_URIS` | No | Additional client callback URIs as a JSON array. Defaults to `[]`. [Provider URIs and copyable examples](mcp-oauth-callbacks.md) |
+| `OAUTH_ALLOW_LOCALHOST` | No | Permit callbacks on the hostname `localhost`. Defaults to `false` |
+| `OAUTH_ALLOW_LOOPBACK` | No | Permit callbacks on `127.0.0.1` at any port for clients such as Codex CLI. Defaults to `true` |
 
 | Additional secret | Value |
 | --- | --- |
@@ -160,9 +160,10 @@ and never to Terraform. The deployment token is not a Worker runtime secret.
 Select existing IdPs **or** opt in to OTP creation, not both. An existing OTP
 provider can be reused by ID; importing it into this stack transfers its
 management to this state and should only be done when this stack owns it.
-OAuth needs at least one allowed callback or an explicit localhost/loopback
-opt-in. Access supports exact native callback schemes as well as web callbacks;
-use the actual callback published by your client, not an example value.
+Codex CLI works with the default callback settings. To restrict registration to
+specific clients, set `OAUTH_ALLOW_LOOPBACK=false` and list their callback URIs
+in `OAUTH_REDIRECT_URIS`. At least one callback URI or local callback option is
+required. Access supports exact native callback schemes as well as web callbacks.
 [Managed OAuth callback rules](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/managed-oauth/#managed-oauth-settings)
 
 Terraform creates the D1 database, email allow policy and Access applications.

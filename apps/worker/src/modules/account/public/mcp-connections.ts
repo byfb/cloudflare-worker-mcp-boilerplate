@@ -12,7 +12,7 @@ import type {
 export interface McpConnectionCapability {
   authorize(
     userId: string,
-    client: McpClientInfo,
+    client: McpClientInfo | undefined,
     activity: McpConnectionActivity,
   ): Promise<void>
   list(userId: string): Promise<{

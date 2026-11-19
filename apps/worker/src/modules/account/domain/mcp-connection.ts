@@ -16,6 +16,12 @@ export interface McpClientDescriptor {
   readonly clientVersion: string
 }
 
+export const UNREPORTED_MCP_CLIENT: McpClientDescriptor = {
+  clientKey: 'mcp:unreported',
+  displayName: 'MCP clients without a name',
+  clientVersion: 'Unreported',
+}
+
 export interface McpConnectionActivity {
   readonly toolCall: boolean
 }
@@ -72,13 +78,15 @@ export function normalizeMcpClientDescriptor(input: {
   readonly name: unknown
   readonly version: unknown
   readonly title?: unknown
-}): McpClientDescriptor {
+} | undefined): McpClientDescriptor {
+  if (input === undefined) return UNREPORTED_MCP_CLIENT
   const name = normalizedRequired(input.name, MCP_CLIENT_NAME_MAX_BYTES)
   const clientVersion = normalizedRequired(
     input.version,
     MCP_CLIENT_VERSION_MAX_BYTES,
   )
   const normalizedKey = name.toLowerCase()
+  if (normalizedKey === UNREPORTED_MCP_CLIENT.clientKey) return UNREPORTED_MCP_CLIENT
   if (byteLength(normalizedKey) > MCP_CLIENT_NAME_MAX_BYTES) {
     return invalidClientIdentity()
   }

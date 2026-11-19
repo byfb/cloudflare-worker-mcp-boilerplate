@@ -10,8 +10,9 @@ Astro application, and authenticated remote MCP server.
 - Username/password accounts, Argon2id password hashes, signed session cookies,
   and CSRF protection for authenticated writes.
 - Optional Cloudflare Access identity linking and browser session bootstrap.
-- Stateless MCP using SDK v2 and the Cloudflare Agents handler, with an
-  allowlisted `exec` command catalog and one example: `get_user_profile`.
+- A stateless Streamable HTTP MCP server using SDK v2 and the Cloudflare Agents
+  handler. Clients can discover `exec` and run the allowlisted `get_user_profile`
+  operation by default.
 - Account-scoped MCP connection controls, bounded requests/results, timeouts,
   and audit events that omit arguments, results, and raw identities.
 - Static Astro pages with Tailwind CSS and TypeScript for sign-in, account settings, and a PWA app shell.
@@ -53,13 +54,48 @@ requests to the local Worker. Use `localhost` because the session cookie is `Sec
 Both development modes and migrations share `.wrangler/state` in the repo root.
 The PWA service worker is built for the production preview, not the Astro dev server.
 
-## Try MCP without provisioning Access
+## Connect to hosted MCP with Managed OAuth
+
+In Terraform mode, the deployment workflow provisions the D1 `DB` binding,
+applies migrations, and enables Managed OAuth on the Access application for
+the MCP hostname. Dynamic client registration allows callbacks on `127.0.0.1`
+at any port, including the one Codex CLI chooses. If you manage Access manually, enable
+**Managed OAuth**, dynamic client registration, and **Allow loopback clients**
+on that application. [Deployment setup](docs/deployment.md#terraform-mode-configuration) · [Manual Access setup](docs/access-and-mcp.md#hosted-configuration)
+
+1. Open the deployed web app through Access and create or sign in to your app
+   account. Under **Account**, select **Link current Access identity** once.
+2. Add the MCP server to Codex using your deployed hostname.
+
+   ```sh
+   codex mcp add app --url https://app.example.com/mcp
+   ```
+
+3. Complete the browser sign-in. To start sign-in manually, run
+   `codex mcp login app`. In Codex, ask it to call the app's `exec` tool with
+   `{"command":"call get_user_profile {}"}`. It returns your app username.
+
+Browser and MCP share a hostname and Access audience by default. If you set
+`MCP_ORIGIN`, use `<MCP_ORIGIN>/mcp` as the server URL.
+
+### Connect from ChatGPT web
+
+1. In your deployed app, select **Account → Link current Access identity**. In
+   ChatGPT, open **Plugins → + → Add custom MCP server**, enter your deployed
+   `/mcp` URL, and choose **OAuth** with dynamic client registration. [ChatGPT plugin setup](https://developers.openai.com/api/docs/guides/custom-mcp-server#how-to-use)
+2. Copy the exact redirect URI shown for this connection on its MCP server
+   management page. Allow it in Cloudflare Access or apply it through the
+   deployment workflow's `OAUTH_REDIRECT_URIS` variable. [Callback list and configuration examples](docs/mcp-oauth-callbacks.md)
+3. Finish creating the plugin, install it, and sign in through Access. Ask ChatGPT to run
+   `call get_user_profile {}` with the plugin's `exec` tool.
+
+## Try MCP locally without provisioning Access
 
 ```sh
 pnpm run dev:mcp
 ```
 
-Connect an MCP SDK v2 client to **http://127.0.0.1:8788/mcp**. This separate local
+Connect a Streamable HTTP client to **http://127.0.0.1:8788/mcp**. This separate local
 entrypoint returns synthetic data and has no database. It is not used by `deploy`.
 
 The single `exec` tool accepts commands such as:
@@ -72,11 +108,8 @@ schema get_user_profile
 call get_user_profile {}
 ```
 
-The main application's `/mcp` endpoint requires configured Cloudflare Access
-and a linked account. Browser and MCP share a hostname and Access audience by
-default, with optional `MCP_ORIGIN` and `ACCESS_MCP_AUDIENCE` overrides. See
-[Access and MCP](docs/access-and-mcp.md) for hosted setup, client requirements,
-and how to add operations.
+Both the local fixture and the hosted Worker register the same tool catalog.
+[Adding an MCP operation](docs/access-and-mcp.md#add-an-mcp-operation)
 
 ## Verify
 
